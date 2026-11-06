@@ -1,0 +1,17 @@
+{
+  "name": "clearmatch-benchmark",
+  "version": "0.1.0",
+  "description": "Banc d'essai zéro-dépendance pour ClearMatch AI v0.1 — résolution des exceptions de rapprochement B2B (terrain Pennylane)",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=23.6.0" },
+  "scripts": {
+    "test": "node --test test/engine.test.ts test/dataset.test.ts test/bench.test.ts",
+    "bench": "node src/bench.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "~5.7.3"
+  }
+}

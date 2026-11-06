@@ -1,0 +1,10 @@
+{
+  "engine": "./src/engine.ts",
+  "engineName": "clearmatch-reference-v0.1",
+  "feeGapMaxCents": 800,
+  "deductionHintMaxRatio": 0.15,
+  "dateWindowDays": 45,
+  "computeEurPerHour": 0.018,
+  "killCeilings": { "nowEurPerOp": 0.5, "trajectoryEurPerOp": 0.1 },
+  "reportDir": "./report"
+}
