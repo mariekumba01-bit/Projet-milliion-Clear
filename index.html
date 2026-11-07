@@ -1,184 +1,341 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ClearMatch — tableau de bord de résolution d'exceptions (v0.2)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClearMatch v0.2 — exceptions de rapprochement résolues avec preuves (démo live)</title>
+<meta name="description" content="Couche d'analyse au-dessus du rapprochement natif : ventilations de virements groupés, déductions, acomptes, doublons — jamais d'écriture automatique. Le moteur tourne dans cette page, sans serveur.">
 <style>
-  :root {
-    --bg: #f6f7f9; --card: #ffffff; --ink: #1a2332; --muted: #5b6b7f;
-    --line: #e3e8ef; --brand: #0f4c81; --brand-soft: #eaf2fa;
-    --ok: #1a7f4b; --ok-bg: #e9f7ef; --warn: #9a6700; --warn-bg: #fff6e0;
-    --gray: #5b6b7f; --gray-bg: #eef1f5; --bad: #b3261e; --bad-bg: #fdeceb;
-    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--ink); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
-  header.top { border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 22px; }
-  .brandline { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-  h1 { font-size: 24px; letter-spacing: -0.02em; }
-  h1 .v { color: var(--brand); }
-  .sub { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
-  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-  .badge { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--muted); }
-  .badge b { color: var(--ink); }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 22px; }
-  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
-  .stat .n { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
-  .stat .l { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  section { margin-bottom: 34px; }
-  h2 { font-size: 18px; margin-bottom: 4px; letter-spacing: -0.01em; }
-  .lead { color: var(--muted); font-size: 13.5px; margin-bottom: 14px; max-width: 760px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
-  .op { display: grid; grid-template-columns: 128px 1fr; gap: 14px; }
-  .op.decision { grid-template-columns: 128px 1fr; }
-  .tag { display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; }
-  .tag.proposal { background: var(--ok-bg); color: var(--ok); border: 1px solid #bfe5cf; }
-  .tag.flag { background: var(--warn-bg); color: var(--warn); border: 1px solid #f0dfae; }
-  .tag.abstain { background: var(--gray-bg); color: var(--gray); border: 1px solid #d6dce4; }
-  .tag .pct { font-weight: 800; }
-  .lbl { font-family: var(--mono); font-size: 12.5px; background: #f4f6f9; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin: 6px 0 10px; word-break: break-all; }
-  .amt { font-weight: 700; }
-  .cls { font-size: 12px; color: var(--muted); font-family: var(--mono); }
-  .expl { font-size: 14px; margin: 6px 0 10px; }
-  .evi { margin: 8px 0 0 18px; }
-  .evi li { font-size: 13px; color: var(--muted); margin-bottom: 3px; }
-  .evi li b { color: var(--ink); font-family: var(--mono); font-size: 11.5px; }
-  table.brk { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-  table.brk th, table.brk td { border: 1px solid var(--line); padding: 6px 10px; text-align: right; }
-  table.brk th { background: #f4f6f9; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
-  table.brk td:first-child, table.brk th:first-child { text-align: left; font-family: var(--mono); }
-  .notes { margin-top: 10px; }
-  .notes div { font-size: 12.5px; color: var(--warn); background: var(--warn-bg); border: 1px solid #f0dfae; border-radius: 8px; padding: 6px 10px; margin-bottom: 6px; }
-  .notes div.info { color: var(--gray); background: var(--gray-bg); border-color: #d6dce4; }
-  .cands { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
-  .trybox { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
-  .trybox label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
-  .trybox input { font: 14px/1.3 system-ui; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
-  .trybox input#t-label { flex: 1 1 340px; }
-  .trybox input#t-amount { width: 120px; }
-  .trybox select { padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
-  button.run { background: var(--brand); color: #fff; border: 0; border-radius: 8px; padding: 9px 18px; font-weight: 700; cursor: pointer; }
-  button.run:hover { background: #0d3f6c; }
-  .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-  .tier { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; position: relative; }
-  .tier.hi { border-color: var(--brand); box-shadow: 0 4px 18px rgba(15, 76, 129, 0.09); }
-  .tier .name { font-weight: 800; font-size: 15px; }
-  .tier .price { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; margin: 6px 0 2px; }
-  .tier .per { color: var(--muted); font-size: 12.5px; }
-  .tier .fcfa { color: var(--brand); font-size: 12.5px; font-weight: 700; margin-top: 3px; }
-  .tier ul { margin: 12px 0 0 18px; }
-  .tier li { font-size: 13.5px; margin-bottom: 6px; color: var(--ink); }
-  .tier .who { font-size: 12.5px; color: var(--muted); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
-  .hyp { font-size: 12.5px; color: var(--muted); margin-top: 12px; }
-  footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 10px; }
-  .discipline { background: var(--brand-soft); border: 1px solid #cfe1f2; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px; font-size: 13.5px; }
-  .discipline b { color: var(--brand); }
-  @media (max-width: 720px) { .op { grid-template-columns: 1fr; } .tag { margin-bottom: 8px; display: inline-block; } }
+:root{
+  --paper:#f3eee2; --paper2:#eae3d0; --card:#fffdf6; --line:#d9d0ba;
+  --ink:#152419; --ink-soft:#48604f; --gray:#66756c;
+  --red:#c2371f; --red-dark:#9e2c17; --red-wash:rgba(194,55,31,.07);
+  --ok:#1c7a54; --ok-wash:rgba(28,122,84,.10); --warn:#a06a10; --warn-wash:rgba(160,106,16,.10);
+  --dark:#132018; --dark2:#0d1811; --paper-on-dark:#efe9da; --soft-on-dark:#9db3a8;
+  --mono:ui-monospace,'Cascadia Mono','SF Mono',Consolas,'Liberation Mono',monospace;
+  --disp:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+  --sans:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
+body{
+  margin:0; background:var(--paper); color:var(--ink); font:16px/1.6 var(--sans);
+  background-image:repeating-linear-gradient(to bottom,transparent 0 27px,rgba(21,36,25,.05) 27px 28px);
+}
+body::before{content:""; position:fixed; inset:0 auto 0 64px; width:2px; background:linear-gradient(var(--red),var(--red)); opacity:.85; z-index:5; pointer-events:none}
+@media (max-width:900px){ body::before{display:none} }
+.wrap{max-width:1080px; margin:0 auto; padding:0 clamp(18px,5vw,48px)}
+a{color:var(--red-dark)}
+.skip{position:absolute; left:-999px; top:8px; background:var(--ink); color:var(--paper); padding:8px 14px; border-radius:8px; z-index:99}
+.skip:focus{left:8px}
+:focus-visible{outline:2px solid var(--red); outline-offset:2px; border-radius:4px}
+
+/* ── boutons : un seul rouge, réservé à l'action ─────────────── */
+.btn{display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer; font:600 15px/1 var(--sans); padding:13px 20px; border-radius:10px; text-decoration:none}
+.btn-primary{background:var(--red); color:var(--paper); box-shadow:3px 3px 0 var(--ink); transition:transform .12s, box-shadow .12s}
+.btn-primary:hover{background:var(--red-dark); transform:translate(-1px,-1px); box-shadow:4px 4px 0 var(--ink)}
+.btn-primary:active{transform:translate(2px,2px); box-shadow:0 0 0 var(--ink)}
+.btn-ghost{background:transparent; color:var(--ink); border:1.5px solid var(--ink); box-shadow:none}
+.btn-ghost:hover{background:var(--red-wash); border-color:var(--red-dark); color:var(--red-dark)}
+.on-dark .btn-ghost{color:var(--paper-on-dark); border-color:rgba(239,233,218,.55)}
+.on-dark .btn-ghost:hover{background:rgba(239,233,218,.08); border-color:var(--paper-on-dark); color:var(--paper-on-dark)}
+.btn-ledger{font:600 13px/1 var(--mono); padding:9px 14px}
+
+/* ── barre de navigation ─────────────────────────────────────── */
+.topnav{position:sticky; top:0; z-index:50; background:rgba(243,238,226,.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--line)}
+.topnav .wrap{display:flex; align-items:center; gap:18px; min-height:58px}
+.brand{font:700 17px var(--mono); color:var(--ink); text-decoration:none; letter-spacing:-.3px}
+.brand em{font-style:normal; color:var(--red)}
+.navlinks{display:flex; gap:16px; margin-left:auto}
+.navlinks a{font:500 14px var(--sans); color:var(--ink-soft); text-decoration:none}
+.navlinks a:hover{color:var(--red-dark)}
+@media (max-width:760px){ .navlinks{display:none} .topnav .btn{margin-left:auto} }
+
+/* ── héro ────────────────────────────────────────────────────── */
+.hero{padding:clamp(44px,7vw,84px) 0 clamp(36px,5vw,60px)}
+.hero .grid{display:grid; grid-template-columns:1.06fr .94fr; gap:clamp(24px,4vw,52px); align-items:center}
+@media (max-width:940px){ .hero .grid{grid-template-columns:1fr} }
+.eyebrow{font:700 12px var(--mono); letter-spacing:.22em; text-transform:uppercase; color:var(--red-dark); margin:0 0 14px}
+h1{font:400 clamp(30px,4.4vw,52px)/1.08 var(--disp); letter-spacing:-.5px; margin:0 0 18px}
+h1 b{font-weight:700; color:var(--red-dark)}
+.sub{font-size:17px; color:var(--ink-soft); max-width:56ch; margin:0 0 22px}
+.ctarow{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin:0 0 18px}
+.ctahint{font:500 13px var(--sans); color:var(--ink-soft)}
+.badges{display:flex; flex-wrap:wrap; gap:8px; margin-top:26px}
+.badge{font:500 12px var(--mono); border:1px dashed var(--ink-soft); border-radius:999px; padding:5px 11px; color:var(--ink-soft)}
+.badge b{color:var(--ok)}
+
+/* ── le grand livre vivant (panneau sombre) ──────────────────── */
+.ledger{background:var(--dark); color:var(--paper-on-dark); border-radius:16px; padding:20px 22px 16px; position:relative; overflow:hidden;
+  background-image:repeating-linear-gradient(to bottom,transparent 0 27px,rgba(239,233,218,.06) 27px 28px); box-shadow:6px 6px 0 rgba(21,36,25,.18)}
+.ledger::after{content:""; position:absolute; left:14px; top:0; bottom:0; width:2px; background:var(--red); opacity:.9}
+.lhead{display:flex; justify-content:space-between; align-items:center; font:700 11px var(--mono); letter-spacing:.18em; text-transform:uppercase; color:var(--soft-on-dark); padding:2px 0 12px 14px}
+.lhead .live{color:#8fd9ae}
+.lhead .live::before{content:"● "; animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.35}}
+#chainlist{margin:0; padding:0 0 6px 14px; list-style:none; font:13.5px/1.5 var(--mono)}
+#chainlist li{padding:9px 0; border-top:1px solid rgba(239,233,218,.14)}
+#chainlist li:first-child{border-top:none}
+.lt{color:#8fd9ae; margin-right:8px}
+.entry{color:var(--paper-on-dark)}
+.seal{display:block; margin-top:4px; color:#8fd9ae; font-size:12px; letter-spacing:.04em}
+.seal b{font-weight:700}
+.cursor{display:inline-block; width:8px; background:var(--paper-on-dark); margin-left:2px; animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.lfoot{display:flex; gap:10px; align-items:center; flex-wrap:wrap; border-top:1px solid rgba(239,233,218,.14); margin:4px 0 0 14px; padding:12px 0 2px}
+#chainstat{font:500 12px var(--mono); color:var(--soft-on-dark)}
+#chainstat.ok{color:#8fd9ae}
+#chainstat.ko{color:#e2a49b}
+.note{font:400 11px var(--mono); color:var(--soft-on-dark); margin:10px 0 0 14px}
+
+/* ── bandeau de preuves ──────────────────────────────────────── */
+.proofband{background:var(--paper2); border-block:1px solid var(--line); padding:26px 0}
+.proofband .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:18px 12px}
+.pb .n{font:700 clamp(24px,3vw,32px)/1 var(--mono); letter-spacing:-.5px}
+.pb .n small{font-size:.55em; font-weight:600; color:var(--ink-soft)}
+.pb .l{font:500 12px/1.35 var(--sans); color:var(--ink-soft); margin-top:4px}
+.pb{border-left:2px solid var(--line); padding-left:12px}
+.pb:first-child{border-left-color:var(--red)}
+
+/* ── sections ────────────────────────────────────────────────── */
+section{padding:clamp(40px,6vw,64px) 0}
+.snum{font:700 13px var(--mono); color:var(--red-dark); letter-spacing:.12em; margin:0 0 8px}
+h2{font:400 clamp(24px,3vw,34px)/1.15 var(--disp); letter-spacing:-.3px; margin:0 0 12px}
+.lead{font-size:16.5px; color:var(--ink-soft); max-width:64ch; margin:0 0 26px}
+
+/* moteur : stats + cartes générées par le JS embarqué */
+#stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:20px}
+.stat{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px}
+.stat .n{font:700 30px/1 var(--mono); letter-spacing:-.5px}
+.stat .l{font:500 12.5px/1.35 var(--sans); color:var(--ink-soft); margin-top:6px}
+#ops{display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:14px}
+#ops .card, #t-out .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; box-shadow:0 1px 0 var(--line)}
+.card .lbl{font:700 14px/1.4 var(--sans)}
+.card .amt{font:600 15px var(--mono); color:var(--ink)}
+.card .cls{display:inline-block; font:700 10.5px/1 var(--mono); text-transform:uppercase; letter-spacing:.08em; background:var(--paper2); border:1px solid var(--line); border-radius:999px; padding:4px 9px; margin:0 6px 6px 0}
+.card .evi{font:500 12px/1.6 var(--mono); color:var(--ink-soft)}
+.card .expl{font:400 13.5px/1.6 var(--sans); color:var(--ink-soft)}
+.card .cands,.card .notes,.card .info{font:500 12px/1.6 var(--mono); color:var(--ink-soft)}
+.card .brk{font:500 12.5px/1.7 var(--mono); color:var(--ink)}
+.card .brk div{border-top:1px dotted var(--line); padding:3px 0}
+.card .brk div:first-child{border-top:none}
+
+/* formulaire d'essai */
+.trybox{display:grid; grid-template-columns:1fr 150px 110px auto; gap:14px; align-items:end}
+@media (max-width:860px){ .trybox{grid-template-columns:1fr 1fr} .trybox > div:first-child{grid-column:1/-1} }
+.trybox label{display:block; font:700 11px var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:6px}
+.trybox input,.trybox select{width:100%; background:var(--card); border:1.5px solid var(--line); border-radius:8px; padding:10px 12px; font:500 15px var(--mono); color:var(--ink)}
+.trybox input:focus,.trybox select:focus{border-color:var(--ink); outline:none; box-shadow:0 0 0 3px var(--red-wash)}
+.run{background:var(--red); color:var(--paper); font:700 15px var(--sans); border:none; border-radius:8px; padding:12px 20px; cursor:pointer; box-shadow:3px 3px 0 var(--ink); transition:transform .12s, box-shadow .12s}
+.run:hover{background:var(--red-dark)}
+.run:active{transform:translate(2px,2px); box-shadow:0 0 0 var(--ink)}
+.run.pulse{animation:ring 1s ease 2}
+@keyframes ring{50%{box-shadow:3px 3px 0 var(--ink),0 0 0 6px var(--red-wash)}}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 0}
+.chip{font:600 12px var(--mono); color:var(--red-dark); background:var(--red-wash); border:1px dashed var(--red); border-radius:999px; padding:6px 13px; cursor:pointer}
+.chip:hover{background:var(--paper); border-style:solid}
+.chiphint{font:500 12px var(--sans); color:var(--ink-soft); align-self:center}
+#t-out{margin-top:16px}
+
+/* ── tarifs ──────────────────────────────────────────────────── */
+.tiers{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; align-items:stretch}
+@media (max-width:900px){ .tiers{grid-template-columns:1fr} }
+.tier{position:relative; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:24px 22px 20px; display:flex; flex-direction:column}
+.tier .name{font:700 20px var(--disp)}
+.tier .price{font:700 34px/1 var(--mono); letter-spacing:-1px; margin-top:12px}
+.tier .per{font:500 12px var(--sans); color:var(--ink-soft); margin-top:4px}
+.tier .fcfa{font:700 14px var(--mono); color:var(--ok); background:var(--ok-wash); border-radius:8px; padding:7px 10px; margin-top:10px; display:inline-block}
+.tier ul{list-style:none; margin:16px 0; padding:14px 0 0; border-top:1px dashed var(--line); flex:1}
+.tier li{font:400 14px/1.5 var(--sans); color:var(--ink-soft); padding:5px 0 5px 20px; position:relative}
+.tier li::before{content:"—"; position:absolute; left:0; color:var(--red)}
+.tier .who{font:500 13px var(--sans); color:var(--ink-soft); font-style:italic; margin:0 0 16px}
+.tier .btn{width:100%; justify-content:center}
+.tier.rec{border:2px solid var(--red); background:#fff; box-shadow:7px 7px 0 rgba(21,36,25,.14)}
+.recflag{position:absolute; top:-13px; left:18px; background:var(--red); color:var(--paper); font:700 11px var(--mono); letter-spacing:.1em; text-transform:uppercase; border-radius:999px; padding:6px 12px}
+.hyp{font:400 13.5px/1.7 var(--sans); color:var(--ink-soft); border-left:3px solid var(--warn); background:var(--warn-wash); padding:14px 16px; border-radius:0 10px 10px 0; margin-top:22px}
+
+/* ── appel final + pied ──────────────────────────────────────── */
+.finalcta{background:var(--dark); color:var(--paper-on-dark); border-radius:20px; padding:clamp(36px,6vw,64px) clamp(22px,5vw,64px); text-align:center;
+  background-image:repeating-linear-gradient(to bottom,transparent 0 27px,rgba(239,233,218,.05) 27px 28px); position:relative; overflow:hidden}
+.finalcta::before{content:""; position:absolute; left:26px; top:0; bottom:0; width:2px; background:var(--red)}
+.finalcta h2{color:var(--paper-on-dark)}
+.finalcta p{color:var(--soft-on-dark); max-width:52ch; margin:0 auto 26px}
+.finalcta .ctarow{justify-content:center; margin-bottom:0}
+footer{border-top:1px solid var(--line); margin-top:56px; padding:26px 0 90px; font:400 13px/1.7 var(--mono); color:var(--ink-soft)}
+footer a{color:var(--ink); text-decoration:underline; text-decoration-color:var(--red)}
+footer .cols{display:flex; flex-wrap:wrap; gap:12px 40px; justify-content:space-between}
+
+/* ── mini-barre collante (conversion) ────────────────────────── */
+.minibar{position:fixed; left:0; right:0; bottom:0; z-index:60; background:var(--dark2); color:var(--paper-on-dark); transform:translateY(110%); transition:transform .25s ease}
+.minibar.on{transform:translateY(0)}
+.minibar .wrap{display:flex; align-items:center; gap:14px; padding-top:10px; padding-bottom:10px}
+.minibar .mb-t{font:700 13px var(--mono); letter-spacing:.02em; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.minibar .mb-t em{font-style:normal; color:#8fd9ae}
+@media (max-width:600px){ .minibar .btn-ledger{padding:9px 10px} .minibar .mb-t{font-size:12px} }
+
+/* patch UI (chaîne + minibar) */
+.entry-detail{display:block;color:var(--soft-on-dark);font-size:12px;margin-top:3px}
+.seal.ko{color:#e2a49b}
+.seal.ko::after{content:" — rompu"}
+#chainverify{padding:9px 14px}
 </style>
 </head>
 <body>
-<div class="wrap">
+<a class="skip" href="#demo">Aller à la démo</a>
+<nav class="topnav"><div class="wrap">
+  <a class="brand" href="#top">ClearMatch <em>v0.2</em></a>
+  <div class="navlinks">
+    <a href="#lot">Le lot</a><a href="#demo">La démo live</a><a href="#tarifs">Les forfaits</a>
+  </div>
+  <a class="btn btn-primary btn-ledger" href="https://github.com/mariekumba01-bit/Projet-milliion-Clear/issues/new?title=Demande%20de%20pilote%20ClearMatch" target="_blank" rel="noopener">Demander le pilote ↗</a>
+</div></nav>
 
-  <header class="top">
-    <div class="brandline">
-      <h1>ClearMatch <span class="v">v0.2</span> — résolution des exceptions de rapprochement</h1>
+<header class="hero" id="top"><div class="wrap"><div class="grid">
+  <div>
+    <p class="eyebrow">Rapprochement · Pennylane · Afrique de l'Ouest &amp; Centrale</p>
+    <h1>Les exceptions de rapprochement, <b>résolues avec preuves</b>. Jamais d'écriture automatique.</h1>
+    <p class="sub">Couche d'analyse au-dessus du rapprochement natif : ventilations de virements groupés, déductions, acomptes, doublons. Chaque décision arrive avec ses preuves, prête à valider — la validation reste humaine, toujours.</p>
+    <div class="ctarow">
+      <a class="btn btn-primary" id="cta-demo" href="#demo">Essayer le moteur — 10 secondes</a>
+      <a class="btn btn-ghost" href="https://github.com/mariekumba01-bit/Projet-milliion-Clear/issues/new?title=Demande%20de%20pilote%20ClearMatch" target="_blank" rel="noopener">Demander le pilote ↗</a>
     </div>
-    <p class="sub">Couche d'analyse au-dessus du rapprochement natif : ventilations de virements groupés, déductions, acomptes, doublons — jamais d'écriture automatique.</p>
+    <p class="ctahint">Le moteur tourne dans cette page, sans serveur. Rien à installer, rien à payer pour voir.</p>
     <div class="badges">
       <span class="badge">validation humaine : <b>obligatoire</b></span>
       <span class="badge">appels LLM : <b>0</b></span>
       <span class="badge">moteur : <b>clearmatch-phase2-v0.2</b></span>
-      <span class="badge">données : <b>démonstration générée</b> — aucune donnée réelle</span>
+      <span class="badge">données : <b>démonstration générée — aucune donnée réelle</b></span>
     </div>
-  </header>
-
-  <div class="stats" id="stats"></div>
-
-  <div class="discipline">
-    <b>Discipline d'abstinence.</b> Le moteur ne propose que des affectations <i>exactes</i> : référence lue, somme exacte,
-    combinaison unique, ratio de 2 % précis. Quand une résolution exacte n'existe pas, il se tait ou signale — il ne devine jamais.
-    Chaque proposition embarque ses preuves et son niveau de confiance ; rien n'est lettré sans validation humaine.
   </div>
-
-  <section>
-    <h2>Traitement du lot importé</h2>
-    <p class="lead">Portefeuille de démonstration : 11 clients, 16 factures ouvertes (dont un doublon de saisie), 21 opérations bancaires — une paire de jumeaux, un doublon de facture, une ventilation refusée. Chaque carte montre la décision, la classe, les preuves et — pour les virements ventilés — la ventilation au centime.</p>
-    <div id="ops"></div>
-  </section>
-
-  <section>
-    <h2>Tester un libellé en direct</h2>
-    <p class="lead">Le moteur tourne entièrement dans cette page (aucun serveur). Saisissez un libellé bancaire et un montant : le moteur l'analyse contre le portefeuille ouvert ci-dessus, avec les mêmes seuils que la version de référence.</p>
-    <div class="card">
-      <div class="trybox">
-        <div style="flex:1 1 340px"><label for="t-label">Libellé bancaire</label><input id="t-label" placeholder="VIR SEPA RECU DE SARL BATIPLUS FACT FA2027-1001" value="VIR SEPA RECU DE MEUBLES DELMAS REGLEMENT FACT FA2027-1002 + FA2027-1005"></div>
-        <div><label for="t-amount">Montant (€)</label><input id="t-amount" type="number" step="0.01" value="138"></div>
-        <div><label for="t-cur">Devise</label><select id="t-cur"><option>EUR</option><option>USD</option></select></div>
-        <div><label>&nbsp;</label><button class="run" id="t-go">Analyser</button></div>
-      </div>
-      <div id="t-out" style="margin-top:14px"></div>
+  <aside class="ledger" aria-label="Grand livre vivant — chaîne de sceaux SHA-256 calculée dans votre navigateur">
+    <div class="lhead"><span>Grand livre — édition en direct</span><span class="live">en direct</span></div>
+    <ul id="chainlist"></ul>
+    <div class="lfoot">
+      <button class="btn btn-ghost btn-ledger on-dark" id="chainverify" type="button">Vérifier la chaîne</button>
+      <span id="chainstat">préparation…</span>
     </div>
-  </section>
+    <p class="note">Sceaux SHA-256 calculés dans votre navigateur, chaînés entry après entry. Modifiez le grand livre : la vérification échouera.</p>
+  </aside>
+</div></div></header>
 
-  <section>
-    <h2>Abonnements (hypothèses de test)</h2>
-    <p class="lead">Trois forfaits mensuels, dimensionnés pour la phase pilote. Ces prix ne sont pas encore validés par le marché : ils seront ajustés sur les résultats des pilotes cabinets.</p>
-    <div class="tiers">
-      <div class="tier">
-        <div class="name">Starter</div>
-        <div class="price">49 €</div>
-        <div class="per">par mois, par entreprise</div>
-        <div class="fcfa">≈ 32 000 FCFA/mois</div>
-        <ul>
-          <li>Rapprochement des exceptions standard</li>
-          <li>Ventilations de virements groupés</li>
-          <li>Déductions reconnues (2 %)</li>
-          <li>Historique 90 jours</li>
-        </ul>
-        <div class="who">TPE / PME isolées sur Pennylane</div>
-      </div>
-      <div class="tier hi">
-        <div class="name">Pro</div>
-        <div class="price">149 €</div>
-        <div class="per">par mois, par entreprise</div>
-        <div class="fcfa">≈ 97 500 FCFA/mois</div>
-        <ul>
-          <li>Tout Starter, plus :</li>
-          <li>Combinaisons libres sans référence</li>
-          <li>Détection de doublons (factures et virements)</li>
-          <li>Preuves audit-ready exportables</li>
-          <li>Historique 1 an</li>
-        </ul>
-        <div class="who">PME à volume d'exceptions élevé</div>
-      </div>
-      <div class="tier">
-        <div class="name">Cabinet</div>
-        <div class="price">399 €</div>
-        <div class="per">par mois, multi-dossiers</div>
-        <div class="fcfa">≈ 261 500 FCFA/mois</div>
-        <ul>
-          <li>Tout Pro, plus :</li>
-          <li>Traitement groupé des dossiers</li>
-          <li>Marque blanche (votre logo, vos couleurs)</li>
-          <li>Rapports de clôture consolidés</li>
-          <li>Support prioritaire</li>
-        </ul>
-        <div class="who">Cabinets comptables (le canal principal)</div>
-      </div>
+<div class="proofband"><div class="wrap"><div class="grid">
+  <div class="pb"><div class="n"><span data-count="114">0</span><small>/114</small></div><div class="l">cas résolus — jeu public, moteur de référence v0.1</div></div>
+  <div class="pb"><div class="n"><span data-count="52">0</span><small>/52</small></div><div class="l">propositions correctes, preuves complètes</div></div>
+  <div class="pb"><div class="n">100<small> %</small></div><div class="l">précision sur le benchmark de référence</div></div>
+  <div class="pb"><div class="n"><span data-count="68">0</span><small>/68</small></div><div class="l">tests automatisés — 0 échec, 0 ignoré</div></div>
+  <div class="pb"><div class="n">0</div><div class="l">dépendance externe du moteur</div></div>
+  <div class="pb"><div class="n">0,50<small> €/op</small></div><div class="l">plafond de coût interne — trajectoire 0,10 €</div></div>
+</div></div></div>
+
+<main class="wrap">
+<section id="lot">
+  <p class="snum">01 · Le lot</p>
+  <h2>Traitement du lot importé</h2>
+  <p class="lead">Portefeuille de démonstration : 11 clients, 16 factures ouvertes (dont un doublon de saisie), 21 opérations bancaires — une paire de jumeaux, un doublon de facture, une ventilation refusée. Chaque carte montre la décision, la classe, les preuves et — pour les virements ventilés — la ventilation au centime.</p>
+  <div id="stats"></div>
+  <div id="ops"></div>
+</section>
+
+<section id="demo">
+  <p class="snum">02 · La preuve, en direct</p>
+  <h2>Tester un libellé en direct</h2>
+  <p class="lead">Le moteur tourne entièrement dans cette page (aucun serveur). Saisissez un libellé bancaire et un montant : le moteur l'analyse contre le portefeuille ouvert ci-dessus, avec les mêmes seuils que la version de référence.</p>
+  <div class="op"><div class="card">
+    <div class="trybox">
+      <div><label for="t-label">Libellé bancaire</label><input id="t-label" placeholder="VIR SEPA RECU DE SARL BATIPLUS FACT FA2027-1001" value="VIR SEPA RECU DE MEUBLES DELMAS REGLEMENT FACT FA2027-1002 + FA2027-1005"></div>
+      <div><label for="t-amount">Montant (€)</label><input id="t-amount" type="number" step="0.01" value="138"></div>
+      <div><label for="t-cur">Devise</label><select id="t-cur"><option>EUR</option><option>USD</option></select></div>
+      <div><label>&nbsp;</label><button class="run" id="t-go" type="button">Analyser</button></div>
     </div>
-    <p class="hyp">Hypothèses de test issues de l'étude — non validées commercialement. Équivalents FCFA à parité fixe (1 EUR = 655,957 FCFA), arrondis au 500 FCFA. Encaissement prévu via <b>SasPay</b> (mobile money et carte, Afrique de l'Ouest et du Centre) ; l'API n'ayant pas de prélèvement récurrent natif, la facturation suit le modèle « lien de paiement par mois ». Aucun paiement n'est collecté ici : cette section est une présentation, pas une boutique.</p>
-  </section>
+    <div class="chips">
+      <span class="chiphint">Ou essayez :</span>
+      <button class="chip" type="button" data-label="VIR SEPA RECU DE MEUBLES DELMAS REGLEMENT FACT FA2027-1002 + FA2027-1005" data-amount="138">Virement groupé (2 factures)</button>
+      <button class="chip" type="button" data-label="VIR SEPA GROUPE MEUBLES DELMAS FACT FA2027-1003 REMISE 2 PCT" data-amount="244">Référence au mauvais client</button>
+      <button class="chip" type="button" data-label="VIR SEPA RECU DE SARL BATIPLUS FACT FA2027-1001" data-amount="1220">Facture isolée</button>
+    </div>
+    <div id="t-out"></div>
+  </div></div>
+</section>
+<section id="tarifs">
+  <p class="snum">03 · Les forfaits</p>
+  <h2>Abonnements (hypothèses de test)</h2>
+  <p class="lead">Trois forfaits mensuels, dimensionnés pour la phase pilote. Ces prix ne sont pas encore validés par le marché : ils seront ajustés sur les résultats des pilotes cabinets.</p>
+  <div class="tiers">
+    <div class="tier">
+      <div class="name">Starter</div>
+      <div class="price">49 €</div>
+      <div class="per">par mois, par entreprise</div>
+      <div class="fcfa">≈ 32 000 FCFA/mois</div>
+      <ul>
+        <li>Rapprochement des exceptions standard</li>
+        <li>Ventilations de virements groupés</li>
+        <li>Déductions reconnues (2 %)</li>
+        <li>Historique 90 jours</li>
+      </ul>
+      <div class="who">TPE / PME isolées sur Pennylane</div>
+      <a class="btn btn-ghost" href="https://github.com/mariekumba01-bit/Projet-milliion-Clear/issues/new?title=Pilote%20Starter%20ClearMatch" target="_blank" rel="noopener">Choisir Starter ↗</a>
+    </div>
+    <div class="tier">
+      <div class="name">Pro</div>
+      <div class="price">149 €</div>
+      <div class="per">par mois, par entreprise</div>
+      <div class="fcfa">≈ 97 500 FCFA/mois</div>
+      <ul>
+        <li>Tout Starter, plus :</li>
+        <li>Combinaisons libres sans référence</li>
+        <li>Détection de doublons (factures et virements)</li>
+        <li>Preuves audit-ready exportables</li>
+        <li>Historique 1 an</li>
+      </ul>
+      <div class="who">PME à volumes soutenus</div>
+      <a class="btn btn-ghost" href="https://github.com/mariekumba01-bit/Projet-milliion-Clear/issues/new?title=Pilote%20Pro%20ClearMatch" target="_blank" rel="noopener">Choisir Pro ↗</a>
+    </div>
+    <div class="tier rec">
+      <span class="recflag">Le plus demandé — pilotes</span>
+      <div class="name">Cabinet</div>
+      <div class="price">399 €</div>
+      <div class="per">par mois, multi-dossiers</div>
+      <div class="fcfa">≈ 261 500 FCFA/mois</div>
+      <ul>
+        <li>Tout Pro, plus :</li>
+        <li>Traitement groupé des dossiers</li>
+        <li>Marque blanche (votre logo, vos couleurs)</li>
+        <li>Rapports de clôture consolidés</li>
+        <li>Support prioritaire</li>
+      </ul>
+      <div class="who">Cabinets comptables (le canal principal)</div>
+      <a class="btn btn-primary" href="https://github.com/mariekumba01-bit/Projet-milliion-Clear/issues/new?title=Pilote%20Cabinet%20ClearMatch" target="_blank" rel="noopener">Demander le pilote Cabinet ↗</a>
+    </div>
+  </div>
+  <p class="hyp">Hypothèses de test issues de l'étude — non validées commercialement. Équivalents FCFA à parité fixe (1 EUR = 655,957 FCFA), arrondis au 500 FCFA. Encaissement prévu via <b>SasPay</b> (mobile money et carte, Afrique de l'Ouest et du Centre) ; l'API n'ayant pas de prélèvement récurrent natif, la facturation suit le modèle « lien de paiement par mois ». Aucun paiement n'est collecté ici : cette section est une présentation, pas une boutique.</p>
+</section>
 
-  <footer>
-    ClearMatch v0.2 — moteur déterministe embarqué dans cette page (port fidèle de src/engine.ts + src/engine-v02.ts) :
-    mêmes règles, mêmes seuils (écart frais ≤ 8,00 €, fenêtre 45 j), mêmes invariants (requiresHuman, 0 LLM).
-    Code source et bancs d'essai : dépôt GitHub « Projet-milliion-Clear ». Page statique autonome — aucune donnée ne quitte le navigateur.
-  </footer>
-</div>
+<section id="pilote">
+  <div class="finalcta">
+    <p class="snum" style="color:#8fd9ae">04 · Le pilote</p>
+    <h2>Votre portefeuille, la même preuve, chez vous.</h2>
+    <p>Un pilote se monte en jours, pas en mois : données anonymisées, seuils du moteur de référence, preuves exportables à chaque décision. Dites-nous simplement par où commencer.</p>
+    <div class="ctarow">
+      <a class="btn btn-primary" href="https://github.com/mariekumba01-bit/Projet-milliion-Clear/issues/new?title=Demande%20de%20pilote%20ClearMatch" target="_blank" rel="noopener">Demander le pilote ↗</a>
+      <a class="btn btn-ghost on-dark" href="https://github.com/mariekumba01-bit/Projet-milliion-Clear" target="_blank" rel="noopener">Lire le code et les tests ↗</a>
+    </div>
+  </div>
+</section>
+</main>
 
+<footer><div class="wrap"><div class="cols">
+  <div>ClearMatch v0.2 — moteur déterministe embarqué dans cette page (port fidèle de src/engine.ts + src/engine-v02.ts). Aucune donnée réelle n'est traitée ici.<br>Code, tests et rapports : <a href="https://github.com/mariekumba01-bit/Projet-milliion-Clear" target="_blank" rel="noopener">github.com/mariekumba01-bit/Projet-milliion-Clear</a></div>
+  <div>Forfaits : hypothèses de test, non validées commercialement. Prix FCFA à parité fixe (1 EUR = 655,957 FCFA).<br>Pilotes et questions : <a href="https://github.com/mariekumba01-bit/Projet-milliion-Clear/issues/new?title=Demande%20de%20pilote%20ClearMatch" target="_blank" rel="noopener">ouvrir une issue GitHub</a></div>
+</div></div></footer>
+
+<div class="minibar" id="minibar" aria-hidden="true"><div class="wrap">
+  <span class="mb-t">Le moteur vient de rendre un verdict <em>avec preuves</em> — voyez le vôtre en 10 secondes.</span>
+  <a class="btn btn-ledger btn-primary" href="#demo">Essayer ↗</a>
+  <button class="btn btn-ledger btn-ghost on-dark" id="mb-close" type="button" aria-label="Fermer">✕</button>
+</div></div>
 <script>
+
 'use strict';
 // ═══════ Port JS du moteur v0.2 (engine.ts + engine-v02.ts) — même logique ═══════
 const FEE_GAP_MAX = 800, DED_HINT_MAX = 0.15, DATE_WINDOW = 45;
@@ -613,6 +770,250 @@ document.getElementById('t-go').addEventListener('click', () => {
 });
 
 render();
+
+</script>
+<script>
+'use strict';
+// ═══ UI « Grand Livre vivant » — ClearMatch v0.2 ═══
+// Chaîne de sceaux SHA-256 calculée dans le navigateur, compteurs, chips, minibar.
+// Les textes des entrées du grand livre sont les sorties EXACTES du moteur
+// (véridiques : sonde scripts/engine_probe2.js sur le lot de démonstration).
+
+/* ── SHA-256 : SubtleCrypto, avec implémentation locale de secours (file://) ── */
+var SHA_K = [
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+
+function rotr32(x, n) { return ((x >>> n) | (x << (32 - n))) >>> 0; }
+
+function sha256local(msgStr) {
+  var bytes = new TextEncoder().encode(msgStr);
+  var l = bytes.length;
+  var blocks = Math.ceil((l + 9) / 64);
+  var total = blocks * 64;
+  var m = new Uint8Array(total);
+  m.set(bytes);
+  m[l] = 0x80;
+  var dv = new DataView(m.buffer);
+  dv.setUint32(total - 8, Math.floor((l * 8) / 4294967296));
+  dv.setUint32(total - 4, (l * 8) >>> 0);
+  var H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+           0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+  var w = new Int32Array(64);
+  for (var b = 0; b < blocks; b++) {
+    var t;
+    for (t = 0; t < 16; t++) w[t] = dv.getUint32(b * 64 + t * 4);
+    for (t = 16; t < 64; t++) {
+      var s0 = rotr32(w[t - 15], 7) ^ rotr32(w[t - 15], 18) ^ (w[t - 15] >>> 3);
+      var s1 = rotr32(w[t - 2], 17) ^ rotr32(w[t - 2], 19) ^ (w[t - 2] >>> 10);
+      w[t] = (w[t - 16] + s0 + w[t - 7] + s1) | 0;
+    }
+    var a = H[0], bb = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+    for (var i = 0; i < 64; i++) {
+      var S1 = rotr32(e, 6) ^ rotr32(e, 11) ^ rotr32(e, 25);
+      var ch = (e & f) ^ (~e & g);
+      var t1 = (h + S1 + ch + SHA_K[i] + w[i]) | 0;
+      var S0 = rotr32(a, 2) ^ rotr32(a, 13) ^ rotr32(a, 22);
+      var mj = (a & bb) ^ (a & c) ^ (bb & c);
+      var t2 = (S0 + mj) | 0;
+      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = bb; bb = a; a = (t1 + t2) | 0;
+    }
+    H[0] = (H[0] + a) | 0; H[1] = (H[1] + bb) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;
+    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
+  }
+  var out = '';
+  for (var k = 0; k < 8; k++) out += (H[k] >>> 0).toString(16).padStart(8, '0');
+  return out;
+}
+
+function sha256hex(str) {
+  if (globalThis.crypto && globalThis.crypto.subtle) {
+    return globalThis.crypto.subtle
+      .digest('SHA-256', new TextEncoder().encode(str))
+      .then(function (buf) {
+        return Array.from(new Uint8Array(buf))
+          .map(function (x) { return x.toString(16).padStart(2, '0'); })
+          .join('');
+      });
+  }
+  return Promise.resolve(sha256local(str));
+}
+
+/* ── Le grand livre : entrées = verdicts réels du moteur (sonde engine_probe2) ── */
+var LEDGER = [
+  { t: 'PROPOSITION — VIR SEPA SARL BATIPLUS FACT FA2027-1001 · 2 400,00 €',
+    d: 'référence lue, montant exact, client cohérent · écart 2 j · conf. 99 %' },
+  { t: 'PROPOSITION — VIR GROUPÉ DISTRIBUTION SUD FA2027-1006 + FA2027-1016 · 4 800,00 €',
+    d: 'somme des 2 factures = montant du virement · 3 600,00 € + 1 200,00 € · conf. 90 %' },
+  { t: 'SIGNAL — INCOMING WIRE USD REF FA2027-1010 · 4 800,00 USD',
+    d: 'rapprochement bloqué : devise du paiement (USD) ≠ devise de la facture (EUR)' },
+  { t: 'SIGNAL — VIR RECU GAUTHIER ET FILS · 3 600,00 € ×2',
+    d: 'deux paiements identiques — ambiguïté signalée, arbitrage humain requis' },
+  { t: 'PROPOSITION — VIR GROUPÉ MEUBLES DELMAS FA2027-1002 + FA2027-1005 · 1 380,00 €',
+    d: 'ventilation au prorata, taux uniforme de 50 % (k = 10/20) · 780,00 € + 600,00 € · conf. 80 %' }
+];
+
+var chainDone = false;
+var chainSealed = [];
+
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+function runLedger() {
+  var ul = document.getElementById('chainlist');
+  var stat = document.getElementById('chainstat');
+  var btn = document.getElementById('chainverify');
+  var prev = 'CLEARMATCH-GENESIS';
+  var i = 0;
+
+  function nextEntry() {
+    if (i >= LEDGER.length) {
+      chainDone = true;
+      stat.textContent = LEDGER.length + ' entrées · ' + LEDGER.length + ' sceaux · chaîne intègre';
+      stat.className = 'ok';
+      btn.disabled = false;
+      return;
+    }
+    var entry = LEDGER[i];
+    var li = document.createElement('li');
+    li.innerHTML = '<span class="lt">№' + (i + 1) + '</span><span class="entry"></span>' +
+      '<span class="entry-detail"></span><span class="seal" data-seal=""></span>';
+    ul.appendChild(li);
+    var entryEl = li.querySelector('.entry');
+    var detEl = li.querySelector('.entry-detail');
+    var sealEl = li.querySelector('.seal');
+
+    var c = 1;
+    (function type() {
+      if (c <= entry.t.length) {
+        entryEl.textContent = entry.t.slice(0, c) + '▍';
+        c++;
+        sleep(9).then(type);
+      } else {
+        entryEl.textContent = entry.t;
+        detEl.textContent = entry.d;
+        sha256hex(prev + '|' + entry.t + '|' + entry.d).then(function (h) {
+          prev = h;
+          sealEl.dataset.seal = h;
+          sealEl.innerHTML = 'sceau ' + String(i + 1).padStart(2, '0') + ' <b>' + h.slice(0, 14) + '…</b>';
+          chainSealed.push(li);
+          stat.textContent = (i + 1) + '/' + LEDGER.length + ' entrées scellées';
+          i++;
+          nextEntry();
+        });
+      }
+    })();
+  }
+  nextEntry();
+}
+
+document.getElementById('chainverify').addEventListener('click', function () {
+  if (!chainDone) return;
+  var stat = document.getElementById('chainstat');
+  var prev = 'CLEARMATCH-GENESIS';
+  var broken = 0;
+  var ChainPromise = Promise.resolve();
+  chainSealed.forEach(function (li, idx) {
+    ChainPromise = ChainPromise.then(function () {
+      var t = li.querySelector('.entry').textContent;
+      var d = li.querySelector('.entry-detail').textContent;
+      return sha256hex(prev + '|' + t + '|' + d).then(function (h) {
+        var stored = li.querySelector('.seal').dataset.seal;
+        var sealEl = li.querySelector('.seal');
+        if (h !== stored) { broken++; sealEl.classList.add('ko'); }
+        else { sealEl.classList.remove('ko'); }
+        prev = stored;
+        return null;
+      });
+    });
+  });
+  ChainPromise.then(function () {
+    if (broken) {
+      stat.textContent = 'ÉCHEC — ' + broken + ' entrée(s) modifiée(s) : chaîne rompue';
+      stat.className = 'ko';
+    } else {
+      stat.textContent = 'Vérification OK — ' + chainSealed.length + ' sceaux recalculés, identiques';
+      stat.className = 'ok';
+    }
+  });
+});
+
+/* ── Compteurs du bandeau de preuves ── */
+function runCounters() {
+  document.querySelectorAll('[data-count]').forEach(function (el) {
+    var target = +el.dataset.count;
+    var t0 = performance.now();
+    var dur = 900;
+    (function tick() {
+      var p = Math.min(1, (performance.now() - t0) / dur);
+      var eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+      el.textContent = String(Math.round(target * eased));
+      if (p < 1) requestAnimationFrame(tick);
+      else el.textContent = String(target);
+    })();
+  });
+}
+if ('IntersectionObserver' in window) {
+  var io = new IntersectionObserver(function (entries, obs) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { runCounters(); obs.disconnect(); }
+    });
+  }, { threshold: 0.3 });
+  io.observe(document.querySelector('.proofband'));
+} else { runCounters(); }
+
+/* ── Chips : remplissent le formulaire et déclenchent l'analyse ── */
+document.querySelectorAll('.chip').forEach(function (chip) {
+  chip.addEventListener('click', function () {
+    document.getElementById('t-label').value = chip.dataset.label;
+    document.getElementById('t-amount').value = chip.dataset.amount;
+    var go = document.getElementById('t-go');
+    go.classList.remove('pulse');
+    void go.offsetWidth;
+    go.click();
+    go.classList.add('pulse');
+    document.getElementById('t-out').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
+});
+
+/* ── Minibar de conversion ── */
+(function () {
+  var mb = document.getElementById('minibar');
+  var demoUsed = false;
+  document.getElementById('t-go').addEventListener('click', function () {
+    demoUsed = true;
+    mb.classList.remove('on');
+  }, true);
+  function show() {
+    if (demoUsed || chainSealed.length === 0) return;
+    mb.classList.add('on');
+    mb.setAttribute('aria-hidden', 'false');
+  }
+  setTimeout(show, 9000);
+  if ('IntersectionObserver' in window) {
+    var io2 = new IntersectionObserver(function (entries, obs) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { show(); obs.disconnect(); }
+      });
+    }, { threshold: 0.35 });
+    io2.observe(document.getElementById('tarifs'));
+  }
+  document.getElementById('mb-close').addEventListener('click', function () {
+    mb.classList.remove('on');
+    mb.setAttribute('aria-hidden', 'true');
+  });
+  mb.querySelector('a').addEventListener('click', function () {
+    mb.classList.remove('on');
+  });
+})();
+
+runLedger();
+
 </script>
 </body>
 </html>
