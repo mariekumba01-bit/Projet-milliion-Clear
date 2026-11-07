@@ -215,19 +215,19 @@
       }
     ],
     "perf": {
-      "medianMs": 0.24495100000001457,
-      "p95Ms": 0.4843089999999961,
-      "totalMs": 53.81329299999982,
-      "opsPerSec": 2118.435680938544,
+      "medianMs": 0.23421299999998269,
+      "p95Ms": 0.4734579999999937,
+      "totalMs": 52.415607999999764,
+      "opsPerSec": 2174.9246903708627,
       "llmCalls": 0
     },
     "cost": {
-      "eurPerOp": 1.2247550000000727e-9,
+      "eurPerOp": 1.1710649999999134e-9,
       "ceilingNow": 0.5,
       "ceilingTrajectory": 0.1,
       "verdictNow": "PASS",
       "verdictTrajectory": "PASS",
-      "assumption": "médiane 0.2450 ms/op × 0.018 €/h de calcul (vCPU partagé) — moteur déterministe, 0 appel LLM"
+      "assumption": "médiane 0.2342 ms/op × 0.018 €/h de calcul (vCPU partagé) — moteur déterministe, 0 appel LLM"
     }
   },
   "outcomes": [
@@ -240,7 +240,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 20.148327999999992,
+      "latencyMs": 20.180402,
       "detail": "",
       "confidence": 0.99
     },
@@ -253,7 +253,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 5.863242999999997,
+      "latencyMs": 5.737269999999995,
       "detail": "",
       "confidence": 0.99
     },
@@ -266,7 +266,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.5399570000000011,
+      "latencyMs": 0.4734579999999937,
       "detail": "",
       "confidence": 0.99
     },
@@ -279,7 +279,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.3852059999999966,
+      "latencyMs": 0.32413300000000334,
       "detail": "",
       "confidence": 0.99
     },
@@ -292,7 +292,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.45851600000000303,
+      "latencyMs": 0.4263260000000031,
       "detail": "",
       "confidence": 0.99
     },
@@ -305,7 +305,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.4041829999999891,
+      "latencyMs": 0.3696809999999999,
       "detail": "",
       "confidence": 0.99
     },
@@ -318,7 +318,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.35917600000000505,
+      "latencyMs": 0.34262300000000323,
       "detail": "",
       "confidence": 0.99
     },
@@ -331,7 +331,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.3409019999999998,
+      "latencyMs": 0.3051679999999948,
       "detail": "",
       "confidence": 0.99
     },
@@ -344,7 +344,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2971029999999928,
+      "latencyMs": 0.2705219999999997,
       "detail": "",
       "confidence": 0.99
     },
@@ -357,7 +357,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2932339999999982,
+      "latencyMs": 0.2814509999999899,
       "detail": "",
       "confidence": 0.99
     },
@@ -370,7 +370,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.35479600000000744,
+      "latencyMs": 0.34433099999999683,
       "detail": "",
       "confidence": 0.99
     },
@@ -383,7 +383,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.3737560000000144,
+      "latencyMs": 0.31474100000001215,
       "detail": "",
       "confidence": 0.99
     },
@@ -396,7 +396,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2941989999999919,
+      "latencyMs": 0.2785120000000063,
       "detail": "",
       "confidence": 0.99
     },
@@ -409,7 +409,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.31430700000001366,
+      "latencyMs": 0.2922349999999909,
       "detail": "",
       "confidence": 0.99
     },
@@ -422,7 +422,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.32139000000000806,
+      "latencyMs": 0.298269000000019,
       "detail": "",
       "confidence": 0.99
     },
@@ -435,7 +435,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.7373819999999967,
+      "latencyMs": 0.2569050000000175,
       "detail": "",
       "confidence": 0.99
     },
@@ -448,7 +448,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.3638569999999959,
+      "latencyMs": 0.692516999999981,
       "detail": "",
       "confidence": 0.99
     },
@@ -461,7 +461,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2808189999999797,
+      "latencyMs": 0.28345099999998524,
       "detail": "",
       "confidence": 0.99
     },
@@ -474,7 +474,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.3122250000000122,
+      "latencyMs": 0.28964899999999716,
       "detail": "",
       "confidence": 0.99
     },
@@ -487,7 +487,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2771979999999985,
+      "latencyMs": 0.2721750000000043,
       "detail": "",
       "confidence": 0.99
     },
@@ -500,7 +500,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2366180000000213,
+      "latencyMs": 0.23421299999998269,
       "detail": "",
       "confidence": 0.99
     },
@@ -513,7 +513,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.24072899999998754,
+      "latencyMs": 0.19672399999998902,
       "detail": "",
       "confidence": 0.99
     },
@@ -526,7 +526,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.22141599999997652,
+      "latencyMs": 0.24366399999999544,
       "detail": "",
       "confidence": 0.99
     },
@@ -539,7 +539,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.1608590000000163,
+      "latencyMs": 0.16181199999999762,
       "detail": "",
       "confidence": 0.99
     },
@@ -552,7 +552,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2143559999999809,
+      "latencyMs": 0.2536609999999939,
       "detail": "",
       "confidence": 0.99
     },
@@ -565,7 +565,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.22098299999998972,
+      "latencyMs": 0.20826099999999315,
       "detail": "",
       "confidence": 0.99
     },
@@ -578,7 +578,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.25264799999999354,
+      "latencyMs": 0.18801099999998883,
       "detail": "",
       "confidence": 0.99
     },
@@ -591,7 +591,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.24109799999999382,
+      "latencyMs": 0.2475260000000219,
       "detail": "",
       "confidence": 0.99
     },
@@ -604,7 +604,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2592369999999846,
+      "latencyMs": 0.22194100000001526,
       "detail": "",
       "confidence": 0.99
     },
@@ -617,7 +617,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.24067200000001776,
+      "latencyMs": 0.21839199999999437,
       "detail": "",
       "confidence": 0.99
     },
@@ -630,7 +630,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2615559999999846,
+      "latencyMs": 0.21016999999997665,
       "detail": "",
       "confidence": 0.9
     },
@@ -643,7 +643,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.23384099999998398,
+      "latencyMs": 0.24488199999998983,
       "detail": "",
       "confidence": 0.9
     },
@@ -656,7 +656,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.224158999999986,
+      "latencyMs": 0.22232700000000705,
       "detail": "",
       "confidence": 0.9
     },
@@ -669,7 +669,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2827780000000075,
+      "latencyMs": 0.20743300000000886,
       "detail": "",
       "confidence": 0.9
     },
@@ -682,7 +682,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.27943400000000906,
+      "latencyMs": 0.20030299999999102,
       "detail": "",
       "confidence": 0.9
     },
@@ -695,7 +695,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.24041400000001545,
+      "latencyMs": 0.2134410000000173,
       "detail": "",
       "confidence": 0.9
     },
@@ -708,7 +708,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2260689999999954,
+      "latencyMs": 0.2431139999999914,
       "detail": "",
       "confidence": 0.99
     },
@@ -721,7 +721,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.21215900000001398,
+      "latencyMs": 0.23056200000002036,
       "detail": "",
       "confidence": 0.99
     },
@@ -734,7 +734,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2725639999999885,
+      "latencyMs": 0.22915500000001998,
       "detail": "",
       "confidence": 0.99
     },
@@ -747,7 +747,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.5439319999999839,
+      "latencyMs": 0.24830099999999788,
       "detail": "",
       "confidence": 0.99
     },
@@ -760,7 +760,7 @@
       "gotClass": "matched_partial",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.376497999999998,
+      "latencyMs": 0.6262949999999989,
       "detail": "",
       "confidence": 0.9
     },
@@ -773,7 +773,7 @@
       "gotClass": "matched_partial",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.3188340000000096,
+      "latencyMs": 0.3047170000000108,
       "detail": "",
       "confidence": 0.9
     },
@@ -786,7 +786,7 @@
       "gotClass": "matched_partial",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.250017999999983,
+      "latencyMs": 0.25835499999999456,
       "detail": "",
       "confidence": 0.9
     },
@@ -799,7 +799,7 @@
       "gotClass": "matched_partial",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.20630500000001462,
+      "latencyMs": 0.20701199999999176,
       "detail": "",
       "confidence": 0.9
     },
@@ -812,7 +812,7 @@
       "gotClass": "matched_partial",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.23814400000000546,
+      "latencyMs": 0.189487999999983,
       "detail": "",
       "confidence": 0.9
     },
@@ -825,7 +825,7 @@
       "gotClass": "matched_partial",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2136600000000044,
+      "latencyMs": 0.18856299999998782,
       "detail": "",
       "confidence": 0.9
     },
@@ -838,7 +838,7 @@
       "gotClass": "matched_partial",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2156039999999848,
+      "latencyMs": 0.18138400000000843,
       "detail": "",
       "confidence": 0.9
     },
@@ -851,7 +851,7 @@
       "gotClass": "matched_partial",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.22407300000000419,
+      "latencyMs": 0.2153109999999856,
       "detail": "",
       "confidence": 0.9
     },
@@ -864,7 +864,7 @@
       "gotClass": "matched_partial",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2235469999999964,
+      "latencyMs": 0.2209320000000048,
       "detail": "",
       "confidence": 0.9
     },
@@ -877,7 +877,7 @@
       "gotClass": "matched_partial",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.22578099999998358,
+      "latencyMs": 0.29117800000000216,
       "detail": "",
       "confidence": 0.9
     },
@@ -890,7 +890,7 @@
       "gotClass": "amount_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.1962530000000129,
+      "latencyMs": 0.2278389999999888,
       "detail": "",
       "confidence": null
     },
@@ -903,7 +903,7 @@
       "gotClass": "amount_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.2289609999999982,
+      "latencyMs": 0.27222000000000435,
       "detail": "",
       "confidence": null
     },
@@ -916,7 +916,7 @@
       "gotClass": "amount_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.20381399999999417,
+      "latencyMs": 0.21179100000000517,
       "detail": "",
       "confidence": null
     },
@@ -929,7 +929,7 @@
       "gotClass": "amount_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.22940100000002417,
+      "latencyMs": 0.18699899999998593,
       "detail": "",
       "confidence": null
     },
@@ -942,7 +942,7 @@
       "gotClass": "amount_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.19209699999998975,
+      "latencyMs": 0.1862610000000018,
       "detail": "",
       "confidence": null
     },
@@ -955,7 +955,7 @@
       "gotClass": "amount_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.18896499999999605,
+      "latencyMs": 0.2392669999999839,
       "detail": "",
       "confidence": null
     },
@@ -968,7 +968,7 @@
       "gotClass": "amount_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.18057400000000712,
+      "latencyMs": 0.20084199999999441,
       "detail": "",
       "confidence": null
     },
@@ -981,7 +981,7 @@
       "gotClass": "amount_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.17047599999997942,
+      "latencyMs": 0.1742100000000164,
       "detail": "",
       "confidence": null
     },
@@ -994,7 +994,7 @@
       "gotClass": "currency_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.21861300000000483,
+      "latencyMs": 0.177599999999984,
       "detail": "",
       "confidence": null
     },
@@ -1007,7 +1007,7 @@
       "gotClass": "currency_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.18951699999999505,
+      "latencyMs": 0.17245499999998515,
       "detail": "",
       "confidence": null
     },
@@ -1020,7 +1020,7 @@
       "gotClass": "currency_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.17094600000001492,
+      "latencyMs": 0.20793699999998694,
       "detail": "",
       "confidence": null
     },
@@ -1033,7 +1033,7 @@
       "gotClass": "currency_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.16088199999998665,
+      "latencyMs": 0.18597399999998743,
       "detail": "",
       "confidence": null
     },
@@ -1046,7 +1046,7 @@
       "gotClass": "rejected_or_reversal",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.0042400000000100135,
+      "latencyMs": 0.007034000000004426,
       "detail": "",
       "confidence": null
     },
@@ -1059,7 +1059,7 @@
       "gotClass": "rejected_or_reversal",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.0014220000000193522,
+      "latencyMs": 0.0015420000000005984,
       "detail": "",
       "confidence": null
     },
@@ -1072,7 +1072,7 @@
       "gotClass": "rejected_or_reversal",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.010637000000002672,
+      "latencyMs": 0.0011800000000050659,
       "detail": "",
       "confidence": null
     },
@@ -1085,7 +1085,7 @@
       "gotClass": "rejected_or_reversal",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.0010910000000023956,
+      "latencyMs": 0.0013230000000135078,
       "detail": "",
       "confidence": null
     },
@@ -1098,7 +1098,7 @@
       "gotClass": "rejected_or_reversal",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.0009440000000040527,
+      "latencyMs": 0.0009259999999926549,
       "detail": "",
       "confidence": null
     },
@@ -1111,7 +1111,7 @@
       "gotClass": "rejected_or_reversal",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.0008420000000057826,
+      "latencyMs": 0.0008959999999831325,
       "detail": "",
       "confidence": null
     },
@@ -1124,7 +1124,7 @@
       "gotClass": "rejected_or_reversal",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.0007549999999980628,
+      "latencyMs": 0.0007870000000025357,
       "detail": "",
       "confidence": null
     },
@@ -1137,7 +1137,7 @@
       "gotClass": "rejected_or_reversal",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.0010019999999997253,
+      "latencyMs": 0.0010990000000106193,
       "detail": "",
       "confidence": null
     },
@@ -1150,7 +1150,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.39198999999999273,
+      "latencyMs": 0.3734359999999981,
       "detail": "",
       "confidence": null
     },
@@ -1163,7 +1163,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.4843089999999961,
+      "latencyMs": 0.5155439999999771,
       "detail": "",
       "confidence": null
     },
@@ -1176,7 +1176,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.36064400000000774,
+      "latencyMs": 0.3429879999999912,
       "detail": "",
       "confidence": null
     },
@@ -1189,7 +1189,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.2978439999999978,
+      "latencyMs": 0.27468600000000265,
       "detail": "",
       "confidence": null
     },
@@ -1202,7 +1202,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.26356900000001815,
+      "latencyMs": 0.2791899999999998,
       "detail": "",
       "confidence": null
     },
@@ -1215,7 +1215,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.23233599999997523,
+      "latencyMs": 0.22022499999999923,
       "detail": "",
       "confidence": null
     },
@@ -1228,7 +1228,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.24495100000001457,
+      "latencyMs": 0.19239999999999213,
       "detail": "",
       "confidence": null
     },
@@ -1241,7 +1241,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.31136300000000006,
+      "latencyMs": 0.3372459999999933,
       "detail": "",
       "confidence": null
     },
@@ -1254,7 +1254,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.25222599999997897,
+      "latencyMs": 0.2827249999999992,
       "detail": "",
       "confidence": null
     },
@@ -1267,7 +1267,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.3658149999999978,
+      "latencyMs": 0.3105009999999879,
       "detail": "",
       "confidence": null
     },
@@ -1280,7 +1280,7 @@
       "gotClass": "matched_exact",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.3271129999999971,
+      "latencyMs": 0.30066499999998086,
       "detail": "",
       "confidence": 0.8
     },
@@ -1293,7 +1293,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.23715799999999376,
+      "latencyMs": 0.2588529999999878,
       "detail": "",
       "confidence": null
     },
@@ -1306,7 +1306,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.2470779999999877,
+      "latencyMs": 0.25487799999999083,
       "detail": "",
       "confidence": null
     },
@@ -1319,7 +1319,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.24688700000001518,
+      "latencyMs": 0.21015299999999115,
       "detail": "",
       "confidence": null
     },
@@ -1332,7 +1332,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.3595229999999958,
+      "latencyMs": 0.19832600000000866,
       "detail": "",
       "confidence": null
     },
@@ -1345,7 +1345,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.250520999999992,
+      "latencyMs": 0.4200739999999996,
       "detail": "",
       "confidence": null
     },
@@ -1358,7 +1358,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.13756900000001338,
+      "latencyMs": 0.14414600000000632,
       "detail": "",
       "confidence": null
     },
@@ -1371,7 +1371,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.15617799999998283,
+      "latencyMs": 0.11895699999999465,
       "detail": "",
       "confidence": null
     },
@@ -1384,7 +1384,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.11852799999999775,
+      "latencyMs": 0.11118199999998524,
       "detail": "",
       "confidence": null
     },
@@ -1397,7 +1397,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.11010500000000434,
+      "latencyMs": 0.10765299999999911,
       "detail": "",
       "confidence": null
     },
@@ -1410,7 +1410,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.20218599999998332,
+      "latencyMs": 0.1829659999999933,
       "detail": "",
       "confidence": null
     },
@@ -1423,7 +1423,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.17462799999998424,
+      "latencyMs": 0.19737499999999386,
       "detail": "",
       "confidence": null
     },
@@ -1436,7 +1436,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.19971299999997427,
+      "latencyMs": 0.179300000000012,
       "detail": "",
       "confidence": null
     },
@@ -1449,7 +1449,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.20500100000000998,
+      "latencyMs": 0.16559999999998354,
       "detail": "",
       "confidence": null
     },
@@ -1462,7 +1462,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.13567199999999957,
+      "latencyMs": 0.1230239999999867,
       "detail": "",
       "confidence": null
     },
@@ -1475,7 +1475,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.11698699999999462,
+      "latencyMs": 0.1094590000000153,
       "detail": "",
       "confidence": null
     },
@@ -1489,7 +1489,7 @@
       "gotClass": "multi_reference_grouped",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.2960520000000031,
+      "latencyMs": 0.2908250000000123,
       "detail": "",
       "confidence": null
     },
@@ -1503,7 +1503,7 @@
       "gotClass": "multi_reference_grouped",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.25126799999998184,
+      "latencyMs": 0.28341499999999087,
       "detail": "",
       "confidence": null
     },
@@ -1517,7 +1517,7 @@
       "gotClass": "multi_reference_grouped",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.2921320000000094,
+      "latencyMs": 0.24302800000000957,
       "detail": "",
       "confidence": null
     },
@@ -1531,7 +1531,7 @@
       "gotClass": "multi_reference_grouped",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.24629500000000348,
+      "latencyMs": 0.23509100000001126,
       "detail": "",
       "confidence": null
     },
@@ -1545,7 +1545,7 @@
       "gotClass": "multi_reference_grouped",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.2435260000000028,
+      "latencyMs": 0.2569479999999942,
       "detail": "",
       "confidence": null
     },
@@ -1559,7 +1559,7 @@
       "gotClass": "multi_reference_grouped",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.24857499999998822,
+      "latencyMs": 0.2508279999999843,
       "detail": "",
       "confidence": null
     },
@@ -1573,7 +1573,7 @@
       "gotClass": "multi_reference_grouped",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.3013700000000199,
+      "latencyMs": 0.2786920000000066,
       "detail": "",
       "confidence": null
     },
@@ -1587,7 +1587,7 @@
       "gotClass": "multi_reference_grouped",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.2382989999999836,
+      "latencyMs": 0.2264690000000087,
       "detail": "",
       "confidence": null
     },
@@ -1601,7 +1601,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.2774949999999876,
+      "latencyMs": 0.31746999999998593,
       "detail": "",
       "confidence": null
     },
@@ -1615,7 +1615,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.40657300000000873,
+      "latencyMs": 0.39538900000002286,
       "detail": "",
       "confidence": null
     },
@@ -1629,7 +1629,7 @@
       "gotClass": "unmatched_no_candidate",
       "gotDecision": "abstain",
       "kind": "ok",
-      "latencyMs": 0.2907950000000028,
+      "latencyMs": 0.2537269999999978,
       "detail": "",
       "confidence": null
     },
@@ -1643,7 +1643,7 @@
       "gotClass": "amount_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.2709649999999897,
+      "latencyMs": 0.2685999999999922,
       "detail": "",
       "confidence": null
     },
@@ -1657,7 +1657,7 @@
       "gotClass": "amount_mismatch",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.2602669999999989,
+      "latencyMs": 0.21806699999999068,
       "detail": "",
       "confidence": null
     },
@@ -1671,7 +1671,7 @@
       "gotClass": "matched_partial",
       "gotDecision": "proposal",
       "kind": "ok",
-      "latencyMs": 0.2303659999999752,
+      "latencyMs": 0.20811700000001565,
       "detail": "",
       "confidence": 0.9
     },
@@ -1685,7 +1685,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.20989499999998884,
+      "latencyMs": 0.20178599999999847,
       "detail": "",
       "confidence": null
     },
@@ -1699,7 +1699,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.19478700000001936,
+      "latencyMs": 0.18660900000000424,
       "detail": "",
       "confidence": null
     },
@@ -1713,7 +1713,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.24965599999998744,
+      "latencyMs": 0.26598199999997973,
       "detail": "",
       "confidence": null
     },
@@ -1727,7 +1727,7 @@
       "gotClass": "ambiguous",
       "gotDecision": "flag",
       "kind": "ok",
-      "latencyMs": 0.24588800000000788,
+      "latencyMs": 0.2238839999999982,
       "detail": "",
       "confidence": null
     }

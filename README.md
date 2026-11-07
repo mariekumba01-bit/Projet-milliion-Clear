@@ -29,7 +29,7 @@ au-dessus du rapprochement natif de Pennylane — jamais un clone.
 | Phase 2 sur C3 (18 cas : 17 verrous + 1 témoin) | 18/18 résolus, ventilations au centime | voir `test/engine-v02.test.ts` |
 | Non-régression C1+C2 (96 cas) | v0.2 = v0.1 partout (décision, classe, proposition, notes, candidats) | idem |
 | Fuzz 8 461 opérations, 2 099 factures, 144 lots | 0 faux appariement, 6 570/6 570 résolus (100 %) | AUDIT, RÉSOLUTION, PERF (méd. 6,42 ms, p95 9,45 ms), COÛT (3,21e-8 €/op) : PASS |
-| Tests automatisés | 50/50 | moteur, dataset, harnais (dont témoin négatif), v0.2, connecteur |
+| Tests automatisés | 68/68 | moteurs, dataset, harnais (dont témoin négatif), connecteurs, persistance |
 
 Le harnais est **prouvé capable d'échouer** : un moteur « négligent » (propose toujours
 la première facture ouverte) est éliminé sur les 4 portes du benchmark, et la moindre
@@ -39,7 +39,7 @@ affectation approximative fait tomber la porte d'audit du fuzz.
 
 ```bash
 npm install          # devDependencies uniquement (typescript, @types/node)
-npm test             # 50 tests : v0.1, dataset, harnais, v0.2, connecteur
+npm test             # 68 tests : v0.1, dataset, harnais, v0.2, connecteurs, persistance
 npm run bench        # benchmark 114 cas → report/benchmark-report.{md,json}
 npm run fuzz         # suite de réalisme → report/fuzz-report.{md,json}
 npm run typecheck    # tsc --noEmit
@@ -62,8 +62,12 @@ src/dataset.ts               — 114 paiements, vérité terrain complète, inva
 src/bench.ts                 — runner, scorer, métriques, rapports (CLI)
 src/fuzz.ts                  — suite de réalisme à grande échelle (générateur déterministe)
 src/connector-pennylane.ts   — traduction Pennylane → domaine (fixtures, zéro réseau)
+src/connector-saspay.ts      — encaissement SasPay : liens, webhooks signés (HMAC + âge),
+                                montants charged/net_amount, paliers FCFA, plan mensuel
+src/store.ts                 — persistance fichier : journal d'audit chaîné par hachage,
+                                snapshots atomiques (aucune base de données)
 src/adapter.ts               — chargeur de moteur (config)
-test/*.test.ts               — 50 tests, dont témoins négatifs
+test/*.test.ts               — 68 tests, dont témoins négatifs
 report/                      — rapports de mesure générés (benchmark, fuzz)
 scripts/                     — utilitaires de débogage (debug-piege.ts)
 ```
@@ -74,13 +78,21 @@ scripts/                     — utilitaires de débogage (debug-piege.ts)
   production ; c'est le rôle des pilotes cabinets de corriger cela.
 - Le connecteur couvre la **traduction** ; l'ingestion réseau (OAuth partenaire,
   webhooks, sandbox) dépend des accès accordés par le programme partenaire.
-- Le coût mesuré est le calcul pur ; l'exploitation réelle (hébergement, journal
-  d'audit, isolation) se budgète au forfait mensuel.
+- Le coût mesuré est le calcul pur ; l'exploitation réelle se budgète au forfait mensuel.
 - Les prix d'abonnement (49/149/399 €/mois) restent des hypothèses de test.
+- L'API SasPay v1.0.0 n'a pas de prélèvement récurrent natif : la facturation suit
+  le modèle « lien de paiement par mois » (src/connector-saspay.ts). SasPay est un
+  service très jeune : vérifier les mentions légales et le statut d'établissement de
+  paiement lors de l'inscription (KYC) avant tout basculement en clé sk_live_.
+- La persistance fichier couvre un seul poste écrivain par pilote ; la concurrence
+  multi-tenants est le moment de parler de SQLite (toujours sans serveur), jamais avant.
 
 ## Conventions de code
 
-- Montants en **centimes entiers**, jamais de flottants (prorata : `round(cents × k/20)`).
+- Montants en **centimes entiers**, jamais de flottants (prorata : `round(cents × k/20)`) ;
+  côté SasPay, rapprocher sur `charged` et `net_amount`, jamais sur le montant demandé seul.
 - `requiresHuman = true` et `llmCalls = 0` sur tout résultat — invariants testés.
+- Les webhooks entrants : signature HMAC-SHA256 sur le corps brut + contrôle d'âge
+  (5 minutes) — deux contrôles, jamais un seul.
 - Toute nouvelle capacité moteur passe par le même circuit : vérité terrain d'abord,
   puis implémentation, puis non-régression, puis fuzz — jamais l'inverse.

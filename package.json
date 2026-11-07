@@ -1,12 +1,12 @@
 {
   "name": "clearmatch-benchmark",
-  "version": "0.2.0",
-  "description": "Banc d'essai zéro-dépendance pour ClearMatch — moteurs v0.1 (référence) et v0.2 (phase 2 : ventilations, déductions, doublons), résolution des exceptions de rapprochement B2B (terrain Pennylane)",
+  "version": "0.2.1",
+  "description": "Banc d'essai zéro-dépendance pour ClearMatch — moteurs v0.1/v0.2, résolution des exceptions de rapprochement (terrain Pennylane), persistance fichier et connecteurs Pennylane/SasPay",
   "type": "module",
   "private": true,
   "engines": { "node": ">=23.6.0" },
   "scripts": {
-    "test": "node --test test/engine.test.ts test/dataset.test.ts test/bench.test.ts test/engine-v02.test.ts test/connector.test.ts",
+    "test": "node --test test/engine.test.ts test/dataset.test.ts test/bench.test.ts test/engine-v02.test.ts test/connector.test.ts test/store.test.ts test/connector-saspay.test.ts",
     "bench": "node src/bench.ts",
     "fuzz": "node src/fuzz.ts",
     "typecheck": "tsc --noEmit"

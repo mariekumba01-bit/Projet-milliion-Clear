@@ -50,9 +50,9 @@
 
 ## Performance et coût (critères kill de l'étude)
 
-- Médiane : 0.2450 ms/op — p95 : 0.4843 ms/op — débit : 2118 op/s
-- Coût calcul : **1.22e-9 €/opération** (plafond immédiat : 0.5 € — PASS ; trajectoire : 0.1 € — PASS)
-- Hypothèse : médiane 0.2450 ms/op × 0.018 €/h de calcul (vCPU partagé) — moteur déterministe, 0 appel LLM
+- Médiane : 0.2342 ms/op — p95 : 0.4735 ms/op — débit : 2175 op/s
+- Coût calcul : **1.17e-9 €/opération** (plafond immédiat : 0.5 € — PASS ; trajectoire : 0.1 € — PASS)
+- Hypothèse : médiane 0.2342 ms/op × 0.018 €/h de calcul (vCPU partagé) — moteur déterministe, 0 appel LLM
 - Appels LLM : 0 (le seul risque réaliste de dépasser 0,10 €/op est d'ajouter des appels LLM par opération — à budgéter par exception, jamais par opération).
 
 ## Backlog phase 2 (réservé au moteur avancé)
