@@ -18,7 +18,7 @@ import type {
 // ── Normalisation ─────────────────────────────────────────────────────────────
 const deburr = (s: string): string => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-function norm(s: string): string {
+export function norm(s: string): string {
   return deburr(s).toUpperCase().replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
@@ -58,34 +58,63 @@ function refPatterns(inv: Invoice): string[] {
   return patterns;
 }
 
-function findRefHits(labelNorm: string, openInvoices: Invoice[]): Invoice[] {
+export function findRefHits(labelNorm: string, openInvoices: Invoice[]): Invoice[] {
   const hits: Invoice[] = [];
   for (const inv of openInvoices) {
-    const found = refPatterns(inv).some((p) => refRe(p).test(labelNorm));
+    const found = compiledRefPatterns(inv).some((re) => re.test(labelNorm));
     if (found) hits.push(inv);
   }
   return hits;
 }
 
+// ── Caches de compilation ─────────────────────────────────────────────────────
+// Le fuzz confronte chaque libellé à ~2 000 factures × ~4 motifs ; recompiler les
+// RegExp à chaque test dominait le temps CPU. Le cache ne change AUCUNE sortie :
+// mêmes patterns, mêmes tests — seule la construction est méorisée.
+const refPatternCache = new Map<string, RegExp[]>();
+const customerPatternCache = new Map<string, RegExp>();
+const CACHE_BOUND = 20_000;
+
+function compiledRefPatterns(inv: Invoice): RegExp[] {
+  const key = `${inv.id}|${inv.number}|${inv.customerReference ?? ''}`;
+  let cached = refPatternCache.get(key);
+  if (!cached) {
+    if (refPatternCache.size > CACHE_BOUND) refPatternCache.clear();
+    cached = refPatterns(inv).map((p) => refRe(p));
+    refPatternCache.set(key, cached);
+  }
+  return cached;
+}
+
+function compiledCustomerPattern(customer: string): RegExp {
+  let cached = customerPatternCache.get(customer);
+  if (!cached) {
+    if (customerPatternCache.size > CACHE_BOUND) customerPatternCache.clear();
+    cached = refRe(escapeRe(norm(customer)));
+    customerPatternCache.set(customer, cached);
+  }
+  return cached;
+}
+
 /** Client identifiable dans le libellé (correspondance exacte de raison sociale). */
-function detectCustomer(labelNorm: string, customers: string[]): string | null {
+export function detectCustomer(labelNorm: string, customers: string[]): string | null {
   let best: string | null = null;
   for (const c of customers) {
     const cn = norm(c);
     if (cn.length < 3) continue;
-    if (refRe(escapeRe(cn)).test(labelNorm) && (!best || cn.length > norm(best).length)) best = c;
+    if (compiledCustomerPattern(c).test(labelNorm) && (!best || cn.length > norm(best).length)) best = c;
   }
   return best;
 }
 
 // ── Formatage ─────────────────────────────────────────────────────────────────
-const fmtEur = (cents: number): string => {
+export const fmtEur = (cents: number): string => {
   const sign = cents < 0 ? '-' : '';
   const v = Math.abs(cents);
   return `${sign}${Math.floor(v / 100).toLocaleString('fr-FR')},${String(v % 100).padStart(2, '0')} €`;
 };
 
-const dayDiff = (a: string, b: string): number =>
+export const dayDiff = (a: string, b: string): number =>
   Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
 
 // ── Moteur ────────────────────────────────────────────────────────────────────

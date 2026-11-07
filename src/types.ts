@@ -23,11 +23,20 @@ export interface Candidate { invoiceId: string; score: number; reason: string }
 
 export interface Proposal {
   invoiceId: string;
-  assignedAmountCents: number; // centimes affectés à la facture (= montant du paiement en v0.1, pas de ventilation)
-  residualCents: number;       // reste à recevoir sur la facture après affectation
+  assignedAmountCents: number; // v0.1 : montant du paiement ; v0.2 : idem, la ventilation détaillée vit dans breakdown
+  residualCents: number;       // reste à recevoir après affectation (sur le groupe entier si breakdown)
   confidence: number;          // [0,1]
   evidence: Evidence[];        // ≥ 2 éléments exigés par le scorer
   explanation: string;         // phrase en français, jamais vide
+  breakdown?: BreakdownEntry[]; // v0.2 : ventilation d'un virement groupé ; absent = affectation simple sur une facture
+}
+
+/** Ligne de ventilation v0.2 — une entrée par facture couverte par un virement groupé. */
+export interface BreakdownEntry {
+  invoiceId: string;
+  invoiceNumber: string;
+  assignedCents: number;   // montant affecté à cette facture
+  residualCents: number;   // reste à recevoir sur cette facture après affectation
 }
 
 export interface EngineResult {
@@ -74,6 +83,7 @@ export interface Engine {
 export interface EngineContext {
   customers: string[];  // répertoire des clients connus (réaliste : fourni par le logiciel comptable)
   config: EngineConfig;
+  batchPayments?: Payment[]; // v0.2 : paiements du même lot d'import (détection de doublons de virement) — ignoré par v0.1
 }
 
 // ── Vérité terrain ────────────────────────────────────────────────────────────
