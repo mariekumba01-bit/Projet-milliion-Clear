@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearMatch — tableau de bord de résolution d'exceptions (v0.2)</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --ink: #1a2332; --muted: #5b6b7f;
+    --line: #e3e8ef; --brand: #0f4c81; --brand-soft: #eaf2fa;
+    --ok: #1a7f4b; --ok-bg: #e9f7ef; --warn: #9a6700; --warn-bg: #fff6e0;
+    --gray: #5b6b7f; --gray-bg: #eef1f5; --bad: #b3261e; --bad-bg: #fdeceb;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
+  header.top { border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 22px; }
+  .brandline { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 24px; letter-spacing: -0.02em; }
+  h1 .v { color: var(--brand); }
+  .sub { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .badge { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--muted); }
+  .badge b { color: var(--ink); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .stat .n { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  .stat .l { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  section { margin-bottom: 34px; }
+  h2 { font-size: 18px; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .lead { color: var(--muted); font-size: 13.5px; margin-bottom: 14px; max-width: 760px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+  .op { display: grid; grid-template-columns: 128px 1fr; gap: 14px; }
+  .op.decision { grid-template-columns: 128px 1fr; }
+  .tag { display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; }
+  .tag.proposal { background: var(--ok-bg); color: var(--ok); border: 1px solid #bfe5cf; }
+  .tag.flag { background: var(--warn-bg); color: var(--warn); border: 1px solid #f0dfae; }
+  .tag.abstain { background: var(--gray-bg); color: var(--gray); border: 1px solid #d6dce4; }
+  .tag .pct { font-weight: 800; }
+  .lbl { font-family: var(--mono); font-size: 12.5px; background: #f4f6f9; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin: 6px 0 10px; word-break: break-all; }
+  .amt { font-weight: 700; }
+  .cls { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .expl { font-size: 14px; margin: 6px 0 10px; }
+  .evi { margin: 8px 0 0 18px; }
+  .evi li { font-size: 13px; color: var(--muted); margin-bottom: 3px; }
+  .evi li b { color: var(--ink); font-family: var(--mono); font-size: 11.5px; }
+  table.brk { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  table.brk th, table.brk td { border: 1px solid var(--line); padding: 6px 10px; text-align: right; }
+  table.brk th { background: #f4f6f9; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  table.brk td:first-child, table.brk th:first-child { text-align: left; font-family: var(--mono); }
+  .notes { margin-top: 10px; }
+  .notes div { font-size: 12.5px; color: var(--warn); background: var(--warn-bg); border: 1px solid #f0dfae; border-radius: 8px; padding: 6px 10px; margin-bottom: 6px; }
+  .notes div.info { color: var(--gray); background: var(--gray-bg); border-color: #d6dce4; }
+  .cands { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+  .trybox { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .trybox label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .trybox input { font: 14px/1.3 system-ui; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
+  .trybox input#t-label { flex: 1 1 340px; }
+  .trybox input#t-amount { width: 120px; }
+  .trybox select { padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  button.run { background: var(--brand); color: #fff; border: 0; border-radius: 8px; padding: 9px 18px; font-weight: 700; cursor: pointer; }
+  button.run:hover { background: #0d3f6c; }
+  .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .tier { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; position: relative; }
+  .tier.hi { border-color: var(--brand); box-shadow: 0 4px 18px rgba(15, 76, 129, 0.09); }
+  .tier .name { font-weight: 800; font-size: 15px; }
+  .tier .price { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; margin: 6px 0 2px; }
+  .tier .per { color: var(--muted); font-size: 12.5px; }
+  .tier .fcfa { color: var(--brand); font-size: 12.5px; font-weight: 700; margin-top: 3px; }
+  .tier ul { margin: 12px 0 0 18px; }
+  .tier li { font-size: 13.5px; margin-bottom: 6px; color: var(--ink); }
+  .tier .who { font-size: 12.5px; color: var(--muted); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  .hyp { font-size: 12.5px; color: var(--muted); margin-top: 12px; }
+  footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 10px; }
+  .discipline { background: var(--brand-soft); border: 1px solid #cfe1f2; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px; font-size: 13.5px; }
+  .discipline b { color: var(--brand); }
+  @media (max-width: 720px) { .op { grid-template-columns: 1fr; } .tag { margin-bottom: 8px; display: inline-block; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brandline">
+      <h1>ClearMatch <span class="v">v0.2</span> — résolution des exceptions de rapprochement</h1>
+    </div>
+    <p class="sub">Couche d'analyse au-dessus du rapprochement natif : ventilations de virements groupés, déductions, acomptes, doublons — jamais d'écriture automatique.</p>
+    <div class="badges">
+      <span class="badge">validation humaine : <b>obligatoire</b></span>
+      <span class="badge">appels LLM : <b>0</b></span>
+      <span class="badge">moteur : <b>clearmatch-phase2-v0.2</b></span>
+      <span class="badge">données : <b>démonstration générée</b> — aucune donnée réelle</span>
+    </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="discipline">
+    <b>Discipline d'abstinence.</b> Le moteur ne propose que des affectations <i>exactes</i> : référence lue, somme exacte,
+    combinaison unique, ratio de 2 % précis. Quand une résolution exacte n'existe pas, il se tait ou signale — il ne devine jamais.
+    Chaque proposition embarque ses preuves et son niveau de confiance ; rien n'est lettré sans validation humaine.
+  </div>
+
+  <section>
+    <h2>Traitement du lot importé</h2>
+    <p class="lead">Portefeuille de démonstration : 11 clients, 16 factures ouvertes (dont un doublon de saisie), 21 opérations bancaires — une paire de jumeaux, un doublon de facture, une ventilation refusée. Chaque carte montre la décision, la classe, les preuves et — pour les virements ventilés — la ventilation au centime.</p>
+    <div id="ops"></div>
+  </section>
+
+  <section>
+    <h2>Tester un libellé en direct</h2>
+    <p class="lead">Le moteur tourne entièrement dans cette page (aucun serveur). Saisissez un libellé bancaire et un montant : le moteur l'analyse contre le portefeuille ouvert ci-dessus, avec les mêmes seuils que la version de référence.</p>
+    <div class="card">
+      <div class="trybox">
+        <div style="flex:1 1 340px"><label for="t-label">Libellé bancaire</label><input id="t-label" placeholder="VIR SEPA RECU DE SARL BATIPLUS FACT FA2027-1001" value="VIR SEPA RECU DE MEUBLES DELMAS REGLEMENT FACT FA2027-1002 + FA2027-1005"></div>
+        <div><label for="t-amount">Montant (€)</label><input id="t-amount" type="number" step="0.01" value="138"></div>
+        <div><label for="t-cur">Devise</label><select id="t-cur"><option>EUR</option><option>USD</option></select></div>
+        <div><label>&nbsp;</label><button class="run" id="t-go">Analyser</button></div>
+      </div>
+      <div id="t-out" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Abonnements (hypothèses de test)</h2>
+    <p class="lead">Trois forfaits mensuels, dimensionnés pour la phase pilote. Ces prix ne sont pas encore validés par le marché : ils seront ajustés sur les résultats des pilotes cabinets.</p>
+    <div class="tiers">
+      <div class="tier">
+        <div class="name">Starter</div>
+        <div class="price">49 €</div>
+        <div class="per">par mois, par entreprise</div>
+        <div class="fcfa">≈ 32 000 FCFA/mois</div>
+        <ul>
+          <li>Rapprochement des exceptions standard</li>
+          <li>Ventilations de virements groupés</li>
+          <li>Déductions reconnues (2 %)</li>
+          <li>Historique 90 jours</li>
+        </ul>
+        <div class="who">TPE / PME isolées sur Pennylane</div>
+      </div>
+      <div class="tier hi">
+        <div class="name">Pro</div>
+        <div class="price">149 €</div>
+        <div class="per">par mois, par entreprise</div>
+        <div class="fcfa">≈ 97 500 FCFA/mois</div>
+        <ul>
+          <li>Tout Starter, plus :</li>
+          <li>Combinaisons libres sans référence</li>
+          <li>Détection de doublons (factures et virements)</li>
+          <li>Preuves audit-ready exportables</li>
+          <li>Historique 1 an</li>
+        </ul>
+        <div class="who">PME à volume d'exceptions élevé</div>
+      </div>
+      <div class="tier">
+        <div class="name">Cabinet</div>
+        <div class="price">399 €</div>
+        <div class="per">par mois, multi-dossiers</div>
+        <div class="fcfa">≈ 261 500 FCFA/mois</div>
+        <ul>
+          <li>Tout Pro, plus :</li>
+          <li>Traitement groupé des dossiers</li>
+          <li>Marque blanche (votre logo, vos couleurs)</li>
+          <li>Rapports de clôture consolidés</li>
+          <li>Support prioritaire</li>
+        </ul>
+        <div class="who">Cabinets comptables (le canal principal)</div>
+      </div>
+    </div>
+    <p class="hyp">Hypothèses de test issues de l'étude — non validées commercialement. Équivalents FCFA à parité fixe (1 EUR = 655,957 FCFA), arrondis au 500 FCFA. Encaissement prévu via <b>SasPay</b> (mobile money et carte, Afrique de l'Ouest et du Centre) ; l'API n'ayant pas de prélèvement récurrent natif, la facturation suit le modèle « lien de paiement par mois ». Aucun paiement n'est collecté ici : cette section est une présentation, pas une boutique.</p>
+  </section>
+
+  <footer>
+    ClearMatch v0.2 — moteur déterministe embarqué dans cette page (port fidèle de src/engine.ts + src/engine-v02.ts) :
+    mêmes règles, mêmes seuils (écart frais ≤ 8,00 €, fenêtre 45 j), mêmes invariants (requiresHuman, 0 LLM).
+    Code source et bancs d'essai : dépôt GitHub « Projet-milliion-Clear ». Page statique autonome — aucune donnée ne quitte le navigateur.
+  </footer>
+</div>
+
+<script>
+'use strict';
+// ═══════ Port JS du moteur v0.2 (engine.ts + engine-v02.ts) — même logique ═══════
+const FEE_GAP_MAX = 800, DED_HINT_MAX = 0.15, DATE_WINDOW = 45;
+
+const deburr = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const norm = (s) => deburr(s).toUpperCase().replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const refRe = (p) => new RegExp(`(?<![A-Z0-9])${p}(?![A-Z0-9])`);
+const dayDiff = (a, b) => Math.abs(Date.parse(a) - Date.parse(b)) / 86400000;
+const fmtEur = (c) => { const s = c < 0 ? '-' : ''; const v = Math.abs(c); return `${s}${Math.floor(v / 100).toLocaleString('fr-FR')},${String(v % 100).padStart(2, '0')} €`; };
+
+function refPatterns(inv) {
+  const up = norm(inv.number);
+  const m = up.match(/^([A-Z]*)(\d[\d .\-/]*\d|\d)(.*)$/);
+  const patterns = [];
+  if (m) {
+    const [, alpha, digits, tail] = m;
+    const groups = digits.split(/[ .\-/]+/).filter(Boolean);
+    const sep = '[ .\\-/]?';
+    if (groups.length > 1) {
+      const lax = groups.map((g, i) => (i > 0 ? g.replace(/^0+/, '') : g));
+      patterns.push(`${alpha}${sep}${groups.join(sep)}${tail}`);
+      patterns.push(`${alpha}${sep}${lax.join(sep)}${tail}`);
+      if (alpha) { patterns.push(`${sep}${groups.join(sep)}${tail}`); patterns.push(`${sep}${lax.join(sep)}${tail}`); }
+    } else {
+      patterns.push(`${alpha}${sep}${digits}${tail}`);
+      if (alpha) patterns.push(`${sep}${digits}${tail}`);
+    }
+  } else patterns.push(escapeRe(up));
+  if (inv.customerReference) patterns.push(escapeRe(norm(inv.customerReference)));
+  return patterns;
+}
+function findRefHits(labelNorm, invs) { return invs.filter((inv) => refPatterns(inv).some((p) => refRe(p).test(labelNorm))); }
+function detectCustomer(labelNorm, customers) {
+  let best = null;
+  for (const c of customers) {
+    const cn = norm(c);
+    if (cn.length < 3) continue;
+    if (refRe(escapeRe(cn)).test(labelNorm) && (!best || cn.length > norm(best).length)) best = c;
+  }
+  return best;
+}
+
+// ── v0.1 : moteur de référence ──
+function v01(payment, openInvoices, context) {
+  const label = norm(payment.label);
+  const base = (decision, classification) => ({ paymentId: payment.id, requiresHuman: true, decision, classification, proposal: null, candidates: [], notes: [], llmCalls: 0 });
+  if (payment.amountCents < 0) {
+    const r = base('flag', 'rejected_or_reversal');
+    r.notes.push('transaction négative : rejet ou annulation probable — à vérifier, jamais proposée en rapprochement');
+    return r;
+  }
+  const refHits = findRefHits(label, openInvoices);
+  const customer = detectCustomer(label, context.customers);
+  if (refHits.length >= 2) {
+    const sameNumber = new Set(refHits.map((i) => norm(i.number).replace(/[ \-/]/g, ''))).size === 1;
+    if (sameNumber) {
+      const r = base('flag', 'ambiguous');
+      r.candidates = refHits.map((i) => ({ invoiceId: i.id, score: 0.5, reason: 'référence identique sur plusieurs factures' }));
+      r.notes.push('doublon de facture possible (référence identique sur plusieurs factures ouvertes)');
+      return r;
+    }
+    const r = base('flag', 'multi_reference_grouped');
+    r.candidates = refHits.map((i) => ({ invoiceId: i.id, score: 0.7, reason: 'référence lue dans le libellé' }));
+    r.notes.push(`virement groupé suspecté (${refHits.length} références distinctes) — ventilation en phase 2, aucun montant affecté`);
+    return r;
+  }
+  if (refHits.length === 1) {
+    const inv = refHits[0];
+    if (payment.currency !== inv.currency) {
+      const r = base('flag', 'currency_mismatch');
+      r.notes.push(`rapprochement bloqué : devise du paiement (${payment.currency}) ≠ devise de la facture (${inv.currency})`);
+      return r;
+    }
+    if (customer && norm(customer) !== norm(inv.customer)) {
+      const r = base('flag', 'ambiguous');
+      r.candidates = [{ invoiceId: inv.id, score: 0.4, reason: 'référence lue mais client du libellé différent' }];
+      r.notes.push(`référence trouvée chez « ${inv.customer} » alors que le libellé désigne « ${customer} » — erreur de saisie probable`);
+      return r;
+    }
+    const gap = inv.amountCents - payment.amountCents;
+    const dateGapDays = Math.round(dayDiff(payment.date, inv.dueDate));
+    const dateEvidence = { kind: 'date_window', detail: dateGapDays <= DATE_WINDOW ? `écart de ${dateGapDays} j avec l'échéance (dans la fenêtre)` : `écart de ${dateGapDays} j avec l'échéance (hors fenêtre de ${DATE_WINDOW} j)` };
+    if (gap === 0) {
+      const confidence = customer ? 0.99 : 0.9;
+      const evidence = [
+        { kind: 'reference_in_label', detail: `référence ${inv.number} lue dans le libellé` },
+        { kind: 'amount_exact', detail: `montant reçu = montant de la facture (${fmtEur(payment.amountCents)})` },
+        dateEvidence,
+      ];
+      if (customer) evidence.push({ kind: 'customer_consistency', detail: `client du libellé = titulaire de la facture (${customer})` });
+      const r = base('proposal', 'matched_exact');
+      r.proposal = {
+        invoiceId: inv.id, assignedAmountCents: payment.amountCents, residualCents: 0, confidence, evidence,
+        explanation: customer
+          ? `Référence ${inv.number} lue dans le libellé, montant exact et client cohérent — affectation proposée, validation humaine requise.`
+          : `Référence ${inv.number} lue dans le libellé et montant exact, sans client identifiable — affectation proposée, validation humaine requise.`,
+      };
+      if (dateGapDays > DATE_WINDOW) r.notes.push(`date hors fenêtre : ${dateGapDays} j de l'échéance — vérifier avec le client`);
+      return r;
+    }
+    if (gap > 0) {
+      const hintDeduction = /ESCOMPTE|REMISE/.test(label);
+      if (hintDeduction && gap <= Math.round(inv.amountCents * DED_HINT_MAX)) {
+        const r = base('flag', 'amount_mismatch');
+        r.notes.push(`écart de ${fmtEur(gap)} avec la facture — déduction/escompte signalé dans le libellé, justificatif requis (résolution en phase 2)`);
+        return r;
+      }
+      if (gap <= FEE_GAP_MAX) {
+        const r = base('flag', 'amount_mismatch');
+        r.notes.push(`écart de ${fmtEur(gap)} avec la facture — type frais bancaires ou déduction (résolution en phase 2)`);
+        return r;
+      }
+      const evidence = [
+        { kind: 'reference_in_label', detail: `référence ${inv.number} lue dans le libellé` },
+        { kind: 'partial_amount', detail: `reçu ${fmtEur(payment.amountCents)} sur une facture de ${fmtEur(inv.amountCents)}` },
+        dateEvidence,
+      ];
+      const r = base('proposal', 'matched_partial');
+      r.proposal = { invoiceId: inv.id, assignedAmountCents: payment.amountCents, residualCents: gap, confidence: 0.9, evidence, explanation: `Paiement partiel sur la facture ${inv.number} (référence explicite) — reste à recevoir : ${fmtEur(gap)}.` };
+      if (payment.amountCents / inv.amountCents < 0.1) r.notes.push('acompte très partiel — vérifier auprès du client');
+      return r;
+    }
+    const r = base('flag', 'amount_mismatch');
+    r.notes.push(`montant reçu supérieur à la facture de ${fmtEur(-gap)} — couverture d'autres éléments possible (résolution en phase 2)`);
+    return r;
+  }
+  if (!customer) {
+    const r = base('abstain', 'unmatched_no_candidate');
+    r.notes.push('aucune référence ni client identifiable dans le libellé — pas de rapprochement approximatif sur les numéros');
+    return r;
+  }
+  const own = openInvoices.filter((i) => norm(i.customer) === norm(customer));
+  const exact = own.filter((i) => i.amountCents === payment.amountCents && i.currency === payment.currency);
+  if (exact.length === 1) {
+    const inv = exact[0];
+    const r = base('proposal', 'matched_exact');
+    r.proposal = {
+      invoiceId: inv.id, assignedAmountCents: payment.amountCents, residualCents: 0, confidence: 0.8,
+      evidence: [
+        { kind: 'customer_consistency', detail: `client du libellé = titulaire de la facture (${customer})` },
+        { kind: 'amount_exact', detail: `montant reçu = montant de la facture (${fmtEur(payment.amountCents)})` },
+        { kind: 'date_window', detail: `écart de ${Math.round(dayDiff(payment.date, inv.dueDate))} j avec l'échéance` },
+      ],
+      explanation: `Affectation sans référence (client ${customer} + montant exact) — confiance limitée, validation humaine obligatoire.`,
+    };
+    r.notes.push("affectation sans référence — vérifier l'intitulé avec le client avant validation");
+    return r;
+  }
+  if (exact.length >= 2) {
+    const r = base('flag', 'ambiguous');
+    r.candidates = exact.map((i) => ({ invoiceId: i.id, score: 1 / (1 + dayDiff(payment.date, i.dueDate)), reason: 'même client, même montant' })).sort((a, b) => b.score - a.score);
+    r.notes.push('plusieurs factures ouvertes de même montant pour ce client — le libellé ne permet pas de trancher');
+    return r;
+  }
+  const r = base('abstain', 'unmatched_no_candidate');
+  r.notes.push('client identifié mais aucun montant ne correspond — ventilation ou paiement partiel possible (résolution en phase 2)');
+  return r;
+}
+
+// ── v0.2 : couche phase 2 ──
+function groupedBreakdown(hits, mode, k) {
+  return hits.map((inv) => {
+    const assigned = mode === 'sum' ? inv.amountCents : mode === 'ded' ? inv.amountCents - Math.round(inv.amountCents * 0.02) : Math.round(inv.amountCents * k / 20);
+    return { invoiceId: inv.id, invoiceNumber: inv.number, assignedCents: assigned, residualCents: inv.amountCents - assigned };
+  });
+}
+function subsetSums(invs, target) {
+  const found = [];
+  for (let mask = 0; mask < (1 << invs.length); mask++) {
+    let bits = 0, x = mask;
+    while (x) { bits += x & 1; x >>= 1; }
+    if (bits < 2) continue;
+    let s = 0; const picked = [];
+    for (let i = 0; i < invs.length; i++) if (mask & (1 << i)) { s += invs[i].amountCents; picked.push(invs[i]); }
+    if (s === target) found.push(picked);
+  }
+  return found;
+}
+function v02(payment, openInvoices, context) {
+  const r1 = v01(payment, openInvoices, context);
+  const label = norm(payment.label);
+  const refHits = findRefHits(label, openInvoices);
+  const customer = detectCustomer(label, context.customers);
+  const hasNote = (frag) => r1.notes.some((n) => n.includes(frag));
+
+  // P1 — ventilation des virements groupés
+  if (r1.decision === 'flag' && r1.classification === 'multi_reference_grouped' && refHits.length >= 2) {
+    const hits = refHits;
+    const pay = payment.amountCents;
+    const sum = hits.reduce((a, i) => a + i.amountCents, 0);
+    if (!hits.every((i) => i.currency === payment.currency)) {
+      r1.notes.push('phase 2 : devises hétérogènes dans le groupe — rapprochement impossible sans vérification humaine');
+    } else {
+      let mode = null, prorataK = 0;
+      if (pay === sum) mode = 'sum';
+      else if (groupedBreakdown(hits, 'ded', 0).reduce((a, b) => a + b.assignedCents, 0) === pay) mode = 'ded';
+      else { for (let k = 1; k <= 19; k++) { if (groupedBreakdown(hits, 'prorata', k).reduce((a, b) => a + b.assignedCents, 0) === pay) { mode = 'prorata'; prorataK = k; break; } } }
+      if (mode) {
+        const breakdown = groupedBreakdown(hits, mode, prorataK);
+        const residualTotal = breakdown.reduce((a, b) => a + b.residualCents, 0);
+        const nums = hits.map((i) => i.number).join(' + ');
+        const dateGapDays = Math.round(dayDiff(payment.date, hits.map((i) => i.dueDate).sort()[0]));
+        const confidence = mode === 'sum' ? 0.9 : mode === 'ded' ? 0.85 : 0.8;
+        const evidence = [
+          { kind: 'references_in_label', detail: `${hits.length} références lues dans le libellé : ${nums}` },
+          mode === 'sum'
+            ? { kind: 'exact_group_sum', detail: `somme des ${hits.length} factures = montant du virement (${fmtEur(pay)})` }
+            : mode === 'ded'
+              ? { kind: 'deduction_justified', detail: `déduction de 2 % reconnue sur le groupe : chaque facture est réglée à 98 % (écart total ${fmtEur(sum - pay)})` }
+              : { kind: 'proportional_split', detail: `ventilation au prorata : taux uniforme de ${prorataK * 5} % (k = ${prorataK}/20) appliqué à chaque facture` },
+          { kind: 'date_window', detail: `écart de ${dateGapDays} j avec la première échéance du groupe (fenêtre ${DATE_WINDOW} j)` },
+        ];
+        const r2 = { paymentId: payment.id, requiresHuman: true, decision: 'proposal', classification: 'multi_reference_grouped', candidates: hits.map((i) => ({ invoiceId: i.id, score: 0.7, reason: 'référence lue dans le libellé' })), notes: [...r1.notes, 'virement groupé ventilé en phase 2 — vérifier chaque ligne avant validation'], llmCalls: 0, proposal: {
+          invoiceId: breakdown[0].invoiceId, assignedAmountCents: pay, residualCents: residualTotal, confidence, evidence, breakdown,
+          explanation: mode === 'sum'
+            ? `Virement groupé : la somme des ${hits.length} factures (${nums}) égale exactement le montant reçu — ventilation proposée, validation humaine requise.`
+            : mode === 'ded'
+              ? `Virement groupé avec déduction de 2 % : chaque facture est réglée à 98 % de son montant (écart total ${fmtEur(sum - pay)}) — ventilation proposée, validation humaine requise.`
+              : `Virement groupé au prorata : taux uniforme de ${prorataK * 5} % appliqué aux ${hits.length} factures — ventilation proposée, validation humaine requise.`,
+        } };
+        return r2;
+      }
+      r1.notes.push('phase 2 : aucune ventilation exacte trouvée (somme, escompte 2 %, prorata 5–95 %) — vérification humaine requise, aucun montant affecté');
+    }
+  }
+
+  // P2 — déduction de 2 % reconnue
+  if (refHits.length === 1 && (r1.classification === 'amount_mismatch' || (r1.decision === 'proposal' && r1.classification === 'matched_partial'))) {
+    const inv = refHits[0];
+    const gap = inv.amountCents - payment.amountCents;
+    const currencyOk = inv.currency === payment.currency;
+    const customerOk = !customer || norm(customer) === norm(inv.customer);
+    if (currencyOk && customerOk && gap === Math.round(inv.amountCents * 0.02)) {
+      const hint = /ESCOMPTE/.test(label) ? 'escompte' : /REMISE/.test(label) ? 'remise' : null;
+      const confidence = hint ? 0.9 : 0.85;
+      const dateGapDays = Math.round(dayDiff(payment.date, inv.dueDate));
+      const r2 = { paymentId: payment.id, requiresHuman: true, decision: 'proposal', classification: 'matched_exact', candidates: [], notes: [...r1.notes, 'déduction de 2 % reconnue en phase 2 — conserver le justificatif (escompte/remise) attaché au lettrage'], llmCalls: 0, proposal: {
+        invoiceId: inv.id, assignedAmountCents: payment.amountCents, residualCents: 0, confidence,
+        evidence: [
+          { kind: 'reference_in_label', detail: `référence ${inv.number} lue dans le libellé` },
+          { kind: 'deduction_justified', detail: hint ? `« ${hint.toUpperCase()} » lu dans le libellé et écart = 2 % exactement de la facture (${fmtEur(gap)})` : `écart de ${fmtEur(gap)} = 2 % exactement de la facture, sans indice textuel — déduction reconnue par le ratio` },
+          { kind: 'amount_after_deduction', detail: `reçu ${fmtEur(payment.amountCents)} = facture ${fmtEur(inv.amountCents)} − 2 %` },
+          { kind: 'date_window', detail: `écart de ${dateGapDays} j avec l'échéance (fenêtre ${DATE_WINDOW} j)` },
+        ],
+        explanation: hint
+          ? `Déduction de 2 % reconnue sur la facture ${inv.number} (${hint} signalé dans le libellé) — affectation proposée au montant reçu, validation humaine requise.`
+          : `Écart de ${fmtEur(gap)} = exactement 2 % de la facture ${inv.number}, sans indice textuel — déduction reconnue par le ratio, validation humaine requise.`,
+      } };
+      return r2;
+    }
+  }
+
+  // P3/P4 — abstention « ventilation ou paiement partiel »
+  if (r1.decision === 'abstain' && r1.classification === 'unmatched_no_candidate' && customer && hasNote('ventilation ou paiement partiel')) {
+    const own = openInvoices.filter((i) => norm(i.customer) === norm(customer) && i.currency === payment.currency);
+    const pay = payment.amountCents;
+    if (own.length === 1 && pay < own[0].amountCents && /ACOMPTE/.test(label)) {
+      const inv = own[0];
+      const gap = inv.amountCents - pay;
+      if (gap > FEE_GAP_MAX && pay / inv.amountCents >= 0.1) {
+        const r2 = { paymentId: payment.id, requiresHuman: true, decision: 'proposal', classification: 'matched_partial', candidates: [], notes: [...r1.notes, "paiement partiel sans référence — proposé uniquement parce que le client n'a qu'une seule facture ouverte et que le libellé mentionne un acompte ; vérifier avec le client"], llmCalls: 0, proposal: {
+          invoiceId: inv.id, assignedAmountCents: pay, residualCents: gap, confidence: 0.7,
+          evidence: [
+            { kind: 'customer_consistency', detail: `client du libellé = titulaire de la facture (${customer}), facture ouverte unique` },
+            { kind: 'partial_hint', detail: `« ACOMPTE » lu dans le libellé` },
+            { kind: 'partial_amount', detail: `reçu ${fmtEur(pay)} sur une facture de ${fmtEur(inv.amountCents)}` },
+            { kind: 'date_window', detail: `écart de ${Math.round(dayDiff(payment.date, inv.dueDate))} j avec l'échéance (fenêtre ${DATE_WINDOW} j)` },
+          ],
+          explanation: `Paiement partiel sans référence (acompte) sur la facture ${inv.number} — reste à recevoir : ${fmtEur(gap)}. Validation humaine requise.`,
+        } };
+        return r2;
+      }
+    }
+    if (own.length >= 2 && own.length <= 12) {
+      const combos = subsetSums(own, pay);
+      if (combos.length === 1) {
+        const picked = combos[0];
+        const breakdown = picked.map((inv) => ({ invoiceId: inv.id, invoiceNumber: inv.number, assignedCents: inv.amountCents, residualCents: 0 }));
+        const nums = picked.map((i) => i.number).join(' + ');
+        const r2 = { paymentId: payment.id, requiresHuman: true, decision: 'proposal', classification: 'multi_reference_grouped', candidates: picked.map((i) => ({ invoiceId: i.id, score: 0.6, reason: 'membre de la combinaison unique' })), notes: [...r1.notes, 'ventilation libre sans référence — combinaison unique, aucune affectation approximative'], llmCalls: 0, proposal: {
+          invoiceId: picked[0].id, assignedAmountCents: pay, residualCents: 0, confidence: 0.8, breakdown,
+          evidence: [
+            { kind: 'customer_consistency', detail: `client du libellé = ${customer}` },
+            { kind: 'unique_subset_sum', detail: `seule combinaison des factures ouvertes sommant à ${fmtEur(pay)} : ${nums} (testées ${2 ** own.length - own.length - 1} combinaisons)` },
+            { kind: 'date_window', detail: `écart de ${Math.round(dayDiff(payment.date, picked.map((i) => i.dueDate).sort()[0]))} j avec la première échéance (fenêtre ${DATE_WINDOW} j)` },
+          ],
+          explanation: `Ventilation sans référence : seule combinaison des factures ouvertes de ${customer} sommant au montant reçu (${nums}) — validation humaine requise.`,
+        } };
+        return r2;
+      }
+      if (combos.length >= 2) {
+        const union = [...new Map(combos.flat().map((i) => [i.id, i])).values()];
+        return { paymentId: payment.id, requiresHuman: true, decision: 'flag', classification: 'ambiguous', proposal: null, candidates: union.map((i) => ({ invoiceId: i.id, score: 0.5, reason: 'combinaison possible de factures sommant au montant' })), notes: [...r1.notes, `phase 2 : ${combos.length} combinaisons de factures ouvertes somment au montant — demander la ventilation au client, aucune affectation`], llmCalls: 0 };
+      }
+    }
+  }
+
+  // P5 — doublon de facture confirmé
+  if (r1.decision === 'flag' && r1.classification === 'ambiguous' && hasNote('doublon de facture possible') && refHits.length >= 2) {
+    const sameAmount = refHits.every((i) => i.amountCents === refHits[0].amountCents);
+    const sameCustomer = refHits.every((i) => norm(i.customer) === norm(refHits[0].customer));
+    if (sameAmount && sameCustomer && refHits.every((i) => i.currency === refHits[0].currency)) {
+      r1.notes.push("phase 2 : doublon de facture confirmé (même numéro, même montant, même client) — double saisie probable : lettrer une seule facture et faire corriger l'autre ; aucune affectation automatique");
+    } else {
+      r1.notes.push('phase 2 : même numéro mais données divergentes (montant ou client) — incohérence de saisie à corriger avant lettrage');
+    }
+  }
+
+  // P6 — doublon de paiement probable
+  if (r1.decision === 'flag' && r1.classification === 'ambiguous' && customer && hasNote('plusieurs factures ouvertes de même montant') && context.batchPayments) {
+    const twins = context.batchPayments.filter((p) => p.id !== payment.id && p.amountCents === payment.amountCents && p.currency === payment.currency && dayDiff(p.date, payment.date) <= 3 && detectCustomer(norm(p.label), context.customers) === customer);
+    if (twins.length >= 1) {
+      r1.notes.push(`phase 2 : doublon de paiement probable — ${1 + twins.length} virements identiques du même client (même montant, même jour ± 3 j : ${twins.map((t) => t.id).join(', ')}) : vérifier avec le client (double virement ou règlement de deux factures distinctes) ; aucune affectation automatique`);
+    }
+  }
+
+  return r1;
+}
+
+// ═══════ Portefeuille de démonstration ═══════
+const customers = ['SARL BATIPLUS', 'Meubles Delmas', 'Atelier Novatek', 'Distribution Sud', 'Étoile Impression', 'Gauthier et Fils', 'Profil Alu Sud', 'Cabinet Vermeulen', 'Transports Balland', 'Laiterie du Val', 'Piscines Lagon'];
+const invoices = [
+  { id: 'inv-001', number: 'FA2027-1001', customer: 'SARL BATIPLUS', customerReference: 'CDE-8842', amountCents: 240000, currency: 'EUR', issueDate: '2027-01-05', dueDate: '2027-01-20', open: true },
+  { id: 'inv-002', number: 'FA2027-1002', customer: 'Meubles Delmas', customerReference: null, amountCents: 156000, currency: 'EUR', issueDate: '2027-01-08', dueDate: '2027-01-23', open: true },
+  { id: 'inv-003', number: 'FA2027-1003', customer: 'SARL BATIPLUS', customerReference: null, amountCents: 84000, currency: 'EUR', issueDate: '2027-01-10', dueDate: '2027-01-25', open: true },
+  { id: 'inv-004', number: 'FA2027-1004', customer: 'Atelier Novatek', customerReference: null, amountCents: 118000, currency: 'EUR', issueDate: '2027-01-11', dueDate: '2027-01-26', open: true },
+  { id: 'inv-005', number: 'FA2027-1005', customer: 'Meubles Delmas', customerReference: null, amountCents: 120000, currency: 'EUR', issueDate: '2027-01-12', dueDate: '2027-01-27', open: true },
+  { id: 'inv-006', number: 'FA2027-1006', customer: 'Distribution Sud', customerReference: null, amountCents: 360000, currency: 'EUR', issueDate: '2027-01-13', dueDate: '2027-01-28', open: true },
+  { id: 'inv-007', number: 'FA2027-1007', customer: 'Étoile Impression', customerReference: null, amountCents: 445000, currency: 'EUR', issueDate: '2027-01-14', dueDate: '2027-02-02', open: true },
+  { id: 'inv-008', number: 'FA2027-1008', customer: 'Gauthier et Fils', customerReference: null, amountCents: 360000, currency: 'EUR', issueDate: '2027-01-15', dueDate: '2027-02-03', open: true },
+  { id: 'inv-009', number: 'FA2027-1009', customer: 'Gauthier et Fils', customerReference: null, amountCents: 360000, currency: 'EUR', issueDate: '2027-01-16', dueDate: '2027-02-04', open: true }, // même montant que inv-008 : nécessaire au piège jumeaux (sinon le v0.1 propose en montant exact unique)
+  { id: 'inv-010', number: 'FA2027-1010', customer: 'Profil Alu Sud', customerReference: null, amountCents: 480000, currency: 'EUR', issueDate: '2027-01-17', dueDate: '2027-02-05', open: true },
+  { id: 'inv-011', number: 'FA2027-1011', customer: 'Cabinet Vermeulen', customerReference: null, amountCents: 92000, currency: 'EUR', issueDate: '2027-01-18', dueDate: '2027-02-06', open: true },
+  { id: 'inv-012', number: 'FA2027-1012', customer: 'Transports Balland', customerReference: null, amountCents: 300000, currency: 'EUR', issueDate: '2027-01-19', dueDate: '2027-02-07', open: true },
+  { id: 'inv-013', number: 'FA2027-1013', customer: 'Laiterie du Val', customerReference: null, amountCents: 2400000, currency: 'EUR', issueDate: '2027-01-20', dueDate: '2027-02-08', open: true },
+  { id: 'inv-014', number: 'FA2027-1014', customer: 'Piscines Lagon', customerReference: null, amountCents: 187000, currency: 'EUR', issueDate: '2027-01-21', dueDate: '2027-02-09', open: true },
+  { id: 'inv-015', number: 'FA2027-1014', customer: 'Piscines Lagon', customerReference: null, amountCents: 187000, currency: 'EUR', issueDate: '2027-01-21', dueDate: '2027-02-09', open: true }, // doublon de facture (même numéro)
+  { id: 'inv-016', number: 'FA2027-1016', customer: 'Distribution Sud', customerReference: null, amountCents: 120000, currency: 'EUR', issueDate: '2027-01-22', dueDate: '2027-02-10', open: true },
+];
+const payments = [
+  { id: 'pay-001', label: 'VIR SEPA RECU DE SARL BATIPLUS FACT FA2027-1001 REF CDE-8842', amountCents: 240000, currency: 'EUR', date: '2027-01-18' },
+  { id: 'pay-002', label: 'VIR RECU FA2027\u00a01004', amountCents: 118000, currency: 'EUR', date: '2027-01-22' },            // NBSP + sans client
+  { id: 'pay-003', label: 'vir sepa recu de distribution sud fact fa2027-1006', amountCents: 216000, currency: 'EUR', date: '2027-01-24' }, // partiel
+  { id: 'pay-004', label: 'VIR SEPA RECU DE DISTRIBUTION SUD REGLEMENT FACT FA2027-1006 + FA2027-1016', amountCents: 480000, currency: 'EUR', date: '2027-01-25' }, // groupé somme : 360000+120000
+  { id: 'pay-005', label: 'VIR SEPA RECU DE ÉTOILE IMPRESSION REGLEMENT FACT FA2027-1007', amountCents: 436100, currency: 'EUR', date: '2027-01-26' },  // déduction 2 % sans indice
+  { id: 'pay-006', label: 'VIR SEPA RECU DE SARL BATIPLUS REGLEMENT FACT FA2027-1001 + FA2027-1003 ESCOMPTE 2 PCT', amountCents: 317520, currency: 'EUR', date: '2027-01-27' }, // groupé ded : (240000+84000)*0.98
+  { id: 'pay-007', label: 'VIR RECU GAUTHIER ET FILS ACOMPTE', amountCents: 144000, currency: 'EUR', date: '2027-01-28' },   // 2 factures ouvertes → pas P3 ; attendu : abstention
+  { id: 'pay-008', label: 'VIR RECU DE CABINET VERMEULEN ACOMPTE', amountCents: 55200, currency: 'EUR', date: '2027-01-29' }, // facture unique 92 000 × 60 % → P3
+  { id: 'pay-009', label: 'VIR RECU TRANSPORTS BALLAND', amountCents: 542000, currency: 'EUR', date: '2027-02-01' },        // sans correspondance → abstain
+  { id: 'pay-010', label: 'VIR SEPA RECU DE LAITERIE DU VAL FACT FA2027-1013 REMISE 2 PCT', amountCents: 2352000, currency: 'EUR', date: '2027-02-02' }, // déduction avec indice
+  { id: 'pay-011', label: 'VIR SEPA RECU DE SARL BATIPLUS FACT FA2027-1001', amountCents: 239400, currency: 'EUR', date: '2027-02-03' }, // écart 6 € (frais)
+  { id: 'pay-012', label: 'INCOMING WIRE USD REF FA2027-1010', amountCents: 480000, currency: 'USD', date: '2027-02-04' },  // devise
+  { id: 'pay-013', label: 'REJET PRLV SARL BATIPLUS', amountCents: -18400, currency: 'EUR', date: '2027-02-05' },           // rejet
+  { id: 'pay-014', label: 'VIR RECU FA2027-9101 DG', amountCents: 118000, currency: 'EUR', date: '2027-02-06' },            // fausse référence (transposition 1004→9104? non : 9101)
+  { id: 'pay-015', label: 'VIR SEPA', amountCents: 64000, currency: 'EUR', date: '2027-02-07' },                             // libellé nu
+  { id: 'pay-016', label: 'VIR SEPA RECU DE PISCINES LAGON FACT FA2027-1014', amountCents: 187000, currency: 'EUR', date: '2027-02-08' }, // doublon facture (inv-014/inv-015 même numéro)
+  { id: 'pay-017', label: 'VIR RECU GAUTHIER ET FILS', amountCents: 360000, currency: 'EUR', date: '2027-02-09' },           // jumeau A (2 factures même montant → ambigu + alerte jumeaux)
+  { id: 'pay-018', label: 'VIR RECU GAUTHIER ET FILS', amountCents: 360000, currency: 'EUR', date: '2027-02-10' },           // jumeau B (inv-008/inv-009 même montant 360000)
+  { id: 'pay-019', label: 'VIR SEPA RECU DE MEUBLES DELMAS REGLEMENT FACT FA2027-1002 + FA2027-1005', amountCents: 138000, currency: 'EUR', date: '2027-02-11' }, // groupé prorata k=10 (50 %)
+  { id: 'pay-020', label: 'VIR SEPA RECU DE SARL BATIPLUS REGLEMENT FACT FA2027-1001 + FA2027-1003', amountCents: 200000, currency: 'EUR', date: '2027-02-12' }, // groupé sans ventilation exacte
+  { id: 'pay-021', label: 'VIR RECU ÉTOILE IMPRESSION', amountCents: 44500, currency: 'EUR', date: '2027-02-13' },           // client sans correspondance (acompte absent)
+];
+const ctx = { customers, config: { feeGapMaxCents: FEE_GAP_MAX, deductionHintMaxRatio: DED_HINT_MAX, dateWindowDays: DATE_WINDOW }, batchPayments: payments };
+
+// ═══════ Rendu ═══════
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmtDate = (iso) => new Date(iso).toLocaleDateString('fr-FR');
+
+function renderOp(r, payment, extraNote) {
+  const cls = {
+    proposal: ['proposal', `proposition · ${Math.round((r.proposal?.confidence ?? 0) * 100)} %`],
+    flag: ['flag', 'à vérifier'],
+    abstain: ['abstain', 'abstention'],
+  }[r.decision];
+  const lines = [];
+  lines.push(`<div class="card"><div class="op">`);
+  lines.push(`<div><span class="tag ${cls[0]}">${cls[1]}</span><div style="margin-top:8px" class="amt">${fmtEur(payment.amountCents)}</div><div class="cls">${payment.currency} · ${fmtDate(payment.date)}</div></div>`);
+  lines.push(`<div>`);
+  lines.push(`<div class="lbl">${esc(payment.label)} <span style="color:var(--muted)">— ${payment.id}</span></div>`);
+  lines.push(`<div class="cls">${r.classification}${r.proposal ? ` · confiance ${(r.proposal.confidence * 100).toFixed(0)} %` : ''}</div>`);
+  if (r.proposal) {
+    lines.push(`<p class="expl">${esc(r.proposal.explanation)}</p>`);
+    lines.push(`<ul class="evi">${r.proposal.evidence.map((e) => `<li><b>${esc(e.kind)}</b> — ${esc(e.detail)}</li>`).join('')}</ul>`);
+    if (r.proposal.breakdown && r.proposal.breakdown.length) {
+      lines.push(`<table class="brk"><tr><th>Facture</th><th>Montant facture</th><th>Affecté</th><th>Reste à recevoir</th></tr>`);
+      for (const b of r.proposal.breakdown) {
+        const inv = invoices.find((i) => i.id === b.invoiceId);
+        lines.push(`<tr><td>${esc(b.invoiceNumber)}</td><td>${fmtEur(inv.amountCents)}</td><td>${fmtEur(b.assignedCents)}</td><td>${fmtEur(b.residualCents)}</td></tr>`);
+      }
+      lines.push(`</table>`);
+    }
+  }
+  if (r.candidates && r.candidates.length) {
+    lines.push(`<div class="cands">Candidats classés (jamais affectés) : ${r.candidates.map((c) => `${c.invoiceId} (${c.reason})`).join(' · ')}</div>`);
+  }
+  const notes = [...r.notes]; if (extraNote) notes.push(extraNote);
+  if (notes.length) lines.push(`<div class="notes">${notes.map((n) => `<div class="${r.decision === 'proposal' ? 'info' : ''}">${esc(n)}</div>`).join('')}</div>`);
+  lines.push(`</div></div></div>`);
+  return lines.join('');
+}
+
+function computeAll() {
+  return payments.map((p) => ({ payment: p, result: v02(p, invoices, ctx) }));
+}
+
+function render() {
+  const all = computeAll();
+  const counts = { proposal: 0, flag: 0, abstain: 0 };
+  for (const { result } of all) counts[result.decision] += 1;
+  const confAvg = all.filter((x) => x.result.proposal).reduce((a, x) => a + x.result.proposal.confidence, 0) / Math.max(1, all.filter((x) => x.result.proposal).length);
+  document.getElementById('stats').innerHTML = [
+    `<div class="stat"><div class="n">${all.length}</div><div class="l">opérations analysées</div></div>`,
+    `<div class="stat"><div class="n" style="color:var(--ok)">${counts.proposal}</div><div class="l">propositions (à valider par un humain)</div></div>`,
+    `<div class="stat"><div class="n" style="color:var(--warn)">${counts.flag}</div><div class="l">anomalies signalées</div></div>`,
+    `<div class="stat"><div class="n" style="color:var(--gray)">${counts.abstain}</div><div class="l">abstentions (silence assumé)</div></div>`,
+    `<div class="stat"><div class="n">${(confAvg * 100).toFixed(0)} %</div><div class="l">confiance moyenne des propositions</div></div>`,
+    `<div class="stat"><div class="n">0</div><div class="l">appel LLM · écriture automatique : aucune</div></div>`,
+  ].join('');
+  document.getElementById('ops').innerHTML = all.map((x) => renderOp(x.result, x.payment)).join('');
+}
+
+document.getElementById('t-go').addEventListener('click', () => {
+  const label = document.getElementById('t-label').value || 'VIR SEPA';
+  const amount = Math.round((parseFloat(document.getElementById('t-amount').value || '0') || 0) * 100);
+  const currency = document.getElementById('t-cur').value;
+  const p = { id: 'pay-live', label, amountCents: amount, currency, date: new Date().toISOString().slice(0, 10) };
+  const liveCtx = { ...ctx, batchPayments: [...payments, p] };
+  const r = v02(p, invoices, liveCtx);
+  const empty = amount === 0 ? '<div class="notes"><div class="info">Saisissez un montant non nul — le moteur n\'analyse jamais un montant vide.</div></div>' : '';
+  document.getElementById('t-out').innerHTML = empty ? empty : renderOp(r, p, 'analysé en direct dans le navigateur — aucune donnée transmise');
+});
+
+render();
+</script>
+</body>
+</html>
