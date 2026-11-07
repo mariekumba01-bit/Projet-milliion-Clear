@@ -1,0 +1,342 @@
+{
+ "invoices": [
+  {
+   "id": "inv-001",
+   "number": "FA2027-1001",
+   "customer": "SARL BATIPLUS",
+   "customerReference": "CDE-8842",
+   "amountCents": 240000,
+   "currency": "EUR",
+   "issueDate": "2027-01-05",
+   "dueDate": "2027-01-20",
+   "open": true
+  },
+  {
+   "id": "inv-002",
+   "number": "FA2027-1002",
+   "customer": "Meubles Delmas",
+   "customerReference": null,
+   "amountCents": 156000,
+   "currency": "EUR",
+   "issueDate": "2027-01-08",
+   "dueDate": "2027-01-23",
+   "open": true
+  },
+  {
+   "id": "inv-003",
+   "number": "FA2027-1003",
+   "customer": "SARL BATIPLUS",
+   "customerReference": null,
+   "amountCents": 84000,
+   "currency": "EUR",
+   "issueDate": "2027-01-10",
+   "dueDate": "2027-01-25",
+   "open": true
+  },
+  {
+   "id": "inv-004",
+   "number": "FA2027-1004",
+   "customer": "Atelier Novatek",
+   "customerReference": null,
+   "amountCents": 118000,
+   "currency": "EUR",
+   "issueDate": "2027-01-11",
+   "dueDate": "2027-01-26",
+   "open": true
+  },
+  {
+   "id": "inv-005",
+   "number": "FA2027-1005",
+   "customer": "Meubles Delmas",
+   "customerReference": null,
+   "amountCents": 120000,
+   "currency": "EUR",
+   "issueDate": "2027-01-12",
+   "dueDate": "2027-01-27",
+   "open": true
+  },
+  {
+   "id": "inv-006",
+   "number": "FA2027-1006",
+   "customer": "Distribution Sud",
+   "customerReference": null,
+   "amountCents": 360000,
+   "currency": "EUR",
+   "issueDate": "2027-01-13",
+   "dueDate": "2027-01-28",
+   "open": true
+  },
+  {
+   "id": "inv-007",
+   "number": "FA2027-1007",
+   "customer": "Étoile Impression",
+   "customerReference": null,
+   "amountCents": 445000,
+   "currency": "EUR",
+   "issueDate": "2027-01-14",
+   "dueDate": "2027-02-02",
+   "open": true
+  },
+  {
+   "id": "inv-008",
+   "number": "FA2027-1008",
+   "customer": "Gauthier et Fils",
+   "customerReference": null,
+   "amountCents": 360000,
+   "currency": "EUR",
+   "issueDate": "2027-01-15",
+   "dueDate": "2027-02-03",
+   "open": true
+  },
+  {
+   "id": "inv-009",
+   "number": "FA2027-1009",
+   "customer": "Gauthier et Fils",
+   "customerReference": null,
+   "amountCents": 360000,
+   "currency": "EUR",
+   "issueDate": "2027-01-16",
+   "dueDate": "2027-02-04",
+   "open": true
+  },
+  {
+   "id": "inv-010",
+   "number": "FA2027-1010",
+   "customer": "Profil Alu Sud",
+   "customerReference": null,
+   "amountCents": 480000,
+   "currency": "EUR",
+   "issueDate": "2027-01-17",
+   "dueDate": "2027-02-05",
+   "open": true
+  },
+  {
+   "id": "inv-011",
+   "number": "FA2027-1011",
+   "customer": "Cabinet Vermeulen",
+   "customerReference": null,
+   "amountCents": 92000,
+   "currency": "EUR",
+   "issueDate": "2027-01-18",
+   "dueDate": "2027-02-06",
+   "open": true
+  },
+  {
+   "id": "inv-012",
+   "number": "FA2027-1012",
+   "customer": "Transports Balland",
+   "customerReference": null,
+   "amountCents": 300000,
+   "currency": "EUR",
+   "issueDate": "2027-01-19",
+   "dueDate": "2027-02-07",
+   "open": true
+  },
+  {
+   "id": "inv-013",
+   "number": "FA2027-1013",
+   "customer": "Laiterie du Val",
+   "customerReference": null,
+   "amountCents": 2400000,
+   "currency": "EUR",
+   "issueDate": "2027-01-20",
+   "dueDate": "2027-02-08",
+   "open": true
+  },
+  {
+   "id": "inv-014",
+   "number": "FA2027-1014",
+   "customer": "Piscines Lagon",
+   "customerReference": null,
+   "amountCents": 187000,
+   "currency": "EUR",
+   "issueDate": "2027-01-21",
+   "dueDate": "2027-02-09",
+   "open": true
+  },
+  {
+   "id": "inv-015",
+   "number": "FA2027-1014",
+   "customer": "Piscines Lagon",
+   "customerReference": null,
+   "amountCents": 187000,
+   "currency": "EUR",
+   "issueDate": "2027-01-21",
+   "dueDate": "2027-02-09",
+   "open": true
+  },
+  {
+   "id": "inv-016",
+   "number": "FA2027-1016",
+   "customer": "Distribution Sud",
+   "customerReference": null,
+   "amountCents": 120000,
+   "currency": "EUR",
+   "issueDate": "2027-01-22",
+   "dueDate": "2027-02-10",
+   "open": true
+  }
+ ],
+ "payments": [
+  {
+   "id": "pay-001",
+   "label": "VIR SEPA RECU DE SARL BATIPLUS FACT FA2027-1001 REF CDE-8842",
+   "amountCents": 240000,
+   "currency": "EUR",
+   "date": "2027-01-18"
+  },
+  {
+   "id": "pay-002",
+   "label": "VIR RECU FA2027 1004",
+   "amountCents": 118000,
+   "currency": "EUR",
+   "date": "2027-01-22"
+  },
+  {
+   "id": "pay-003",
+   "label": "vir sepa recu de distribution sud fact fa2027-1006",
+   "amountCents": 216000,
+   "currency": "EUR",
+   "date": "2027-01-24"
+  },
+  {
+   "id": "pay-004",
+   "label": "VIR SEPA RECU DE DISTRIBUTION SUD REGLEMENT FACT FA2027-1006 + FA2027-1016",
+   "amountCents": 480000,
+   "currency": "EUR",
+   "date": "2027-01-25"
+  },
+  {
+   "id": "pay-005",
+   "label": "VIR SEPA RECU DE ÉTOILE IMPRESSION REGLEMENT FACT FA2027-1007",
+   "amountCents": 436100,
+   "currency": "EUR",
+   "date": "2027-01-26"
+  },
+  {
+   "id": "pay-006",
+   "label": "VIR SEPA RECU DE SARL BATIPLUS REGLEMENT FACT FA2027-1001 + FA2027-1003 ESCOMPTE 2 PCT",
+   "amountCents": 317520,
+   "currency": "EUR",
+   "date": "2027-01-27"
+  },
+  {
+   "id": "pay-007",
+   "label": "VIR RECU GAUTHIER ET FILS ACOMPTE",
+   "amountCents": 144000,
+   "currency": "EUR",
+   "date": "2027-01-28"
+  },
+  {
+   "id": "pay-008",
+   "label": "VIR RECU DE CABINET VERMEULEN ACOMPTE",
+   "amountCents": 55200,
+   "currency": "EUR",
+   "date": "2027-01-29"
+  },
+  {
+   "id": "pay-009",
+   "label": "VIR RECU TRANSPORTS BALLAND",
+   "amountCents": 542000,
+   "currency": "EUR",
+   "date": "2027-02-01"
+  },
+  {
+   "id": "pay-010",
+   "label": "VIR SEPA RECU DE LAITERIE DU VAL FACT FA2027-1013 REMISE 2 PCT",
+   "amountCents": 2352000,
+   "currency": "EUR",
+   "date": "2027-02-02"
+  },
+  {
+   "id": "pay-011",
+   "label": "VIR SEPA RECU DE SARL BATIPLUS FACT FA2027-1001",
+   "amountCents": 239400,
+   "currency": "EUR",
+   "date": "2027-02-03"
+  },
+  {
+   "id": "pay-012",
+   "label": "INCOMING WIRE USD REF FA2027-1010",
+   "amountCents": 480000,
+   "currency": "USD",
+   "date": "2027-02-04"
+  },
+  {
+   "id": "pay-013",
+   "label": "REJET PRLV SARL BATIPLUS",
+   "amountCents": -18400,
+   "currency": "EUR",
+   "date": "2027-02-05"
+  },
+  {
+   "id": "pay-014",
+   "label": "VIR RECU FA2027-9101 DG",
+   "amountCents": 118000,
+   "currency": "EUR",
+   "date": "2027-02-06"
+  },
+  {
+   "id": "pay-015",
+   "label": "VIR SEPA",
+   "amountCents": 64000,
+   "currency": "EUR",
+   "date": "2027-02-07"
+  },
+  {
+   "id": "pay-016",
+   "label": "VIR SEPA RECU DE PISCINES LAGON FACT FA2027-1014",
+   "amountCents": 187000,
+   "currency": "EUR",
+   "date": "2027-02-08"
+  },
+  {
+   "id": "pay-017",
+   "label": "VIR RECU GAUTHIER ET FILS",
+   "amountCents": 360000,
+   "currency": "EUR",
+   "date": "2027-02-09"
+  },
+  {
+   "id": "pay-018",
+   "label": "VIR RECU GAUTHIER ET FILS",
+   "amountCents": 360000,
+   "currency": "EUR",
+   "date": "2027-02-10"
+  },
+  {
+   "id": "pay-019",
+   "label": "VIR SEPA RECU DE MEUBLES DELMAS REGLEMENT FACT FA2027-1002 + FA2027-1005",
+   "amountCents": 138000,
+   "currency": "EUR",
+   "date": "2027-02-11"
+  },
+  {
+   "id": "pay-020",
+   "label": "VIR SEPA RECU DE SARL BATIPLUS REGLEMENT FACT FA2027-1001 + FA2027-1003",
+   "amountCents": 200000,
+   "currency": "EUR",
+   "date": "2027-02-12"
+  },
+  {
+   "id": "pay-021",
+   "label": "VIR RECU ÉTOILE IMPRESSION",
+   "amountCents": 44500,
+   "currency": "EUR",
+   "date": "2027-02-13"
+  }
+ ],
+ "customers": [
+  "SARL BATIPLUS",
+  "Meubles Delmas",
+  "Atelier Novatek",
+  "Distribution Sud",
+  "Étoile Impression",
+  "Gauthier et Fils",
+  "Profil Alu Sud",
+  "Cabinet Vermeulen",
+  "Transports Balland",
+  "Laiterie du Val",
+  "Piscines Lagon"
+ ]
+}

@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClearMatch — application</title>
+<style>
+:root{--paper:#f3eee2;--card:#fffdf6;--line:#d9d0ba;--ink:#152419;--ink-soft:#48604f;--red:#c2371f;--ok:#1c7a54;--warn:#a06a10;--mono:ui-monospace,Consolas,monospace;--sans:system-ui,-apple-system,'Segoe UI',sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 var(--sans);background-image:repeating-linear-gradient(to bottom,transparent 0 27px,rgba(21,36,25,.05) 27px 28px)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+header{border-bottom:1px solid var(--line);background:rgba(243,238,226,.95);position:sticky;top:0}
+header .wrap{display:flex;align-items:center;gap:16px;min-height:54px}
+.brand{font:700 16px var(--mono)}
+.brand em{font-style:normal;color:var(--red)}
+.spacer{flex:1}
+h2{font:600 20px/1.2 var(--sans);margin:0 0 10px}
+h3{font:600 15px/1.2 var(--sans);margin:18px 0 8px;color:var(--ink-soft)}
+section{padding:26px 0;border-bottom:1px dashed var(--line)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:10px 0}
+.btn{display:inline-block;border:1.5px solid var(--ink);background:transparent;color:var(--ink);font:600 14px var(--sans);padding:9px 16px;border-radius:8px;cursor:pointer}
+.btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn.small{padding:5px 10px;font-size:12.5px}
+input,select,textarea{font:500 14px var(--mono);padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;background:#fff;width:100%}
+label{display:block;font:700 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin:10px 0 4px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font:700 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);text-align:left;border-bottom:2px solid var(--ink);padding:6px 8px}
+td{border-bottom:1px dotted var(--line);padding:7px 8px;vertical-align:top}
+.pill{display:inline-block;font:700 10.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--paper)}
+.pill.proposal{background:rgba(28,122,84,.12);border-color:var(--ok);color:var(--ok)}
+.pill.flag{background:rgba(160,106,16,.12);border-color:var(--warn);color:var(--warn)}
+.pill.abstain{color:var(--ink-soft)}
+.pill.validated{background:var(--ok);color:#fff;border-color:var(--ok)}
+.pill.rejected{background:var(--red);color:#fff;border-color:var(--red)}
+.mono{font-family:var(--mono)}
+.muted{color:var(--ink-soft);font-size:13px}
+#msg{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#f3eee2;padding:10px 18px;border-radius:10px;font:600 13.5px var(--sans);display:none;max-width:90vw;z-index:9}
+.hidden{display:none}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-width:120px}
+.stat .n{font:700 24px var(--mono)}
+.stat .l{font-size:12px;color:var(--ink-soft)}
+details summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--ink-soft)}
+.evi{font:400 12px/1.5 var(--mono);color:var(--ink-soft);white-space:pre-wrap}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <span class="brand">ClearMatch <em>app</em></span><span class="muted mono" id="ver">moteur v0.2 · validation humaine obligatoire</span>
+  <span class="spacer"></span>
+  <span id="whoami" class="muted mono"></span>
+  <button class="btn small hidden" id="btn-logout">Déconnexion</button>
+</div></header>
+
+<div class="wrap">
+<section id="sec-auth">
+  <h2>Compte</h2>
+  <div class="card" style="display:flex;gap:26px;flex-wrap:wrap">
+    <div style="flex:1;min-width:260px">
+      <h3>Inscription</h3>
+      <label>Nom</label><input id="reg-name" placeholder="Marie Kumba">
+      <label>E-mail</label><input id="reg-email" type="email" placeholder="marie@cabinet.fr">
+      <label>Mot de passe (10 car. min)</label><input id="reg-pass" type="password">
+      <p><button class="btn primary" id="btn-register">Créer le compte</button></p>
+    </div>
+    <div style="flex:1;min-width:260px">
+      <h3>Connexion</h3>
+      <label>E-mail</label><input id="log-email" type="email">
+      <label>Mot de passe</label><input id="log-pass" type="password">
+      <p><button class="btn primary" id="btn-login">Se connecter</button></p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-companies" class="hidden">
+  <h2>Entreprises (espaces isolés)</h2>
+  <div class="card">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px"><label>Nouvelle entreprise</label><input id="co-name" placeholder="Société Exemple SARL"></div>
+      <button class="btn primary" id="btn-create-co">Créer</button>
+    </div>
+    <div id="co-list" style="margin-top:12px"></div>
+  </div>
+</section>
+
+<section id="sec-portfolio" class="hidden">
+  <h2>Portefeuille &amp; moteur — <span id="co-title" class="mono"></span></h2>
+  <div class="card">
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="btn-seed">Charger le portefeuille de démonstration (16 factures / 21 opérations)</button>
+      <button class="btn" id="btn-reanalyze">Ré-analyser le lot</button>
+      <button class="btn" id="btn-refresh-ex">Rafraîchir la liste</button>
+    </div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:14px">
+      <div style="flex:1;min-width:300px">
+        <h3>Importer des factures (JSON)</h3>
+        <textarea id="inv-json" rows="4" placeholder='[{"id":"inv-1","number":"FA2026-001","customer":"SARL Exemple","amountCents":120000,"currency":"EUR","issueDate":"2026-11-01","dueDate":"2026-12-01"}]'></textarea>
+        <p><button class="btn small" id="btn-import-inv">Importer les factures</button></p>
+      </div>
+      <div style="flex:1;min-width:300px">
+        <h3>Importer des opérations bancaires (JSON)</h3>
+        <textarea id="pay-json" rows="4" placeholder='[{"id":"pay-1","label":"VIR SEPA RECU DE SARL EXEMPLE FACT FA2026-001","amountCents":120000,"currency":"EUR","date":"2026-11-20"}]'></textarea>
+        <p><button class="btn small" id="btn-import-pay">Importer les opérations</button></p>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Analyser un libellé à la volée</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex:2;min-width:280px"><label>Libellé bancaire</label><input id="an-label" placeholder="VIR SEPA RECU DE … FACT …"></div>
+      <div style="width:130px"><label>Montant (€)</label><input id="an-amount" type="number" step="0.01" value="2400"></div>
+      <div style="width:110px"><label>Devise</label><select id="an-cur"><option>EUR</option><option>USD</option></select></div>
+      <button class="btn primary" id="btn-analyze">Analyser</button>
+    </div>
+    <div id="an-out" style="margin-top:10px"></div>
+  </div>
+  <div class="stats" id="ex-stats"></div>
+  <h3>Exceptions — décision humaine requise</h3>
+  <div class="card"><table id="ex-table"><thead><tr><th>#</th><th>Libellé</th><th>Montant</th><th>Décision moteur</th><th>Classe</th><th>Statut</th><th>Preuves / action</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section id="sec-journal" class="hidden">
+  <h2>Écritures proposées &amp; journal d'audit</h2>
+  <div class="card"><h3>Écritures générées à la validation (jamais postées automatiquement)</h3><div id="journal-out" class="mono" style="font-size:12.5px"></div></div>
+  <div class="card">
+    <div style="display:flex;gap:10px;align-items:center"><h3 style="margin:0">Journal d'audit chaîné (SHA-256)</h3>
+    <button class="btn small" id="btn-verify">Vérifier la chaîne</button><span id="verify-out" class="mono" style="font-size:13px"></span></div>
+    <div id="audit-out" class="mono" style="font-size:12px;color:var(--ink-soft);margin-top:8px"></div>
+  </div>
+</section>
+
+<section id="sec-billing" class="hidden">
+  <h2>Abonnement — lien de paiement par mois</h2>
+  <div class="card" id="sub-out"></div>
+  <div class="card">
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" data-plan="starter">Souscrire Starter — 49 € ≈ 32 000 FCFA</button>
+      <button class="btn" data-plan="pro">Souscrire Pro — 149 € ≈ 97 500 FCFA</button>
+      <button class="btn primary" data-plan="cabinet">Souscrire Cabinet — 399 € ≈ 261 500 FCFA</button>
+    </div>
+    <p class="muted">Modèle « lien de paiement par mois » (SasPay, mobile money / carte) : envoi J1, rappel J7, suspension d'accès J21 si non réglé. Prix = hypothèses de test, non validées commercialement. Sans clé API SasPay, le lien est créé en mode manuel (créé depuis le tableau de bord SasPay, puis versé dans l'app).</p>
+  </div>
+</section>
+
+<section id="sec-integrations" class="hidden">
+  <h2>Intégrations</h2>
+  <div class="card">
+    <h3>Pennylane (OAuth2 partenaire)</h3>
+    <p class="muted">Flow authorization code réel (app.pennylane.com/oauth) : scopes <span class="mono">customer_invoices:readonly transactions:readonly customers:readonly bank_accounts:readonly</span>, refresh token à rotation stricte, jetons chiffrés AES-256-GCM au repos. Requiert PENNYLANE_CLIENT_ID/SECRET (accès partenaire). La synchronisation importe factures ouvertes + transactions bancaires dans votre portefeuille.</p>
+    <button class="btn primary" id="btn-pl-auth">Connecter Pennylane</button>
+    <button class="btn" id="btn-pl-sync">Synchroniser maintenant</button>
+    <div id="pl-status" class="mono muted" style="margin-top:8px"></div>
+  </div>
+  <div class="card">
+    <h3>SasPay (webhooks)</h3>
+    <p class="muted">Configurer le webhook depuis le tableau de bord SasPay vers <span class="mono" id="hook-url"></span> — signature HMAC sur corps brut vérifiée à temps constant (tolérance 300 s), idempotence par id d'événement.</p>
+  </div>
+</section>
+</div>
+
+<div id="msg"></div>
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const CSRF = { 'Content-Type': 'application/json', 'x-clearmatch-csrf': '1' };
+let state = { user: null, companies: [], companyId: null };
+
+function toast(text, isErr) { const m = $('msg'); m.textContent = text; m.style.display = 'block'; m.style.background = isErr ? '#c2371f' : '#152419'; setTimeout(() => { m.style.display = 'none'; }, 4200); }
+async function api(path, opts = {}) {
+  const res = await fetch(path, { method: opts.method || 'GET', headers: opts.body ? CSRF : {}, body: opts.body ? JSON.stringify(opts.body) : undefined });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error?.message || `HTTP ${res.status}`);
+  return data;
+}
+const eur = (c) => (c / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+
+function show(sec, on) { $(sec).classList.toggle('hidden', !on); }
+
+async function refreshMe() {
+  const me = await api('/api/me').catch(() => null);
+  state.user = me?.user ?? null;
+  state.companies = me?.companies ?? [];
+  $('whoami').textContent = state.user ? `${state.user.name} · ${state.user.email}` : '';
+  $('btn-logout').classList.toggle('hidden', !state.user);
+  show('sec-companies', !!state.user);
+  renderCompanies();
+  const c = state.companies.find((x) => x.id === state.companyId);
+  if (c) { show('sec-portfolio', true); show('sec-journal', true); show('sec-billing', true); show('sec-integrations', true); }
+  else { for (const s of ['sec-portfolio', 'sec-journal', 'sec-billing', 'sec-integrations']) show(s, false); }
+}
+
+function renderCompanies() {
+  const el = $('co-list');
+  el.innerHTML = state.companies.length
+    ? '<table><thead><tr><th>Entreprise</th><th>Rôle</th><th>Abonnement</th><th></th></tr></thead><tbody>' +
+      state.companies.map((c) => `<tr><td>${c.name}</td><td class="mono">${c.role}</td><td class="mono">${c.subscription_status ?? 'none'}</td><td><button class="btn small" data-co="${c.id}">Ouvrir</button></td></tr>`).join('') +
+      '</tbody></table>'
+    : '<p class="muted">Aucune entreprise — créez-en une ci-dessus.</p>';
+  el.querySelectorAll('button[data-co]').forEach((b) => (b.onclick = () => { state.companyId = Number(b.dataset.co); refreshMe(); refreshPortfolio(); }));
+  const c = state.companies.find((x) => x.id === state.companyId);
+  $('co-title').textContent = c ? c.name : '';
+  $('hook-url').textContent = location.origin + '/api/webhooks/saspay';
+}
+
+function resultCard(r) {
+  const pill = (c) => `<span class="pill ${c}">${c}</span>`;
+  const evi = (r.proposal?.evidence ?? []).map((e) => `• [${e.kind}] ${e.detail}`).join('\n');
+  const notes = (r.notes ?? []).join(' · ');
+  const brk = (r.proposal?.breakdown ?? []).map((b) => `<div>${b.invoiceNumber} ← ${eur(b.assignedCents)} (résiduel ${eur(b.residualCents)})</div>`).join('');
+  return `<div style="margin-top:8px">${pill(r.decision)} ${pill(r.classification)} ${r.proposal ? `confiance <b>${Math.round(r.proposal.confidence * 100)} %</b>` : ''} · appels LLM : ${r.llmCalls}
+    <div class="evi">${r.proposal ? r.proposal.explanation + '\n' + evi : (notes || '')}${brk ? '\nVentilation :\n' + brk : ''}</div></div>`;
+}
+
+async function refreshPortfolio() {
+  if (!state.companyId) return;
+  const ex = await api(`/api/companies/${state.companyId}/exceptions`);
+  const counts = { proposal: 0, flag: 0, abstain: 0, validated: 0, rejected: 0 };
+  for (const e of ex.exceptions) { counts[e.decision]++; if (e.status !== 'proposed') counts[e.status]++; }
+  $('ex-stats').innerHTML = Object.entries(counts).map(([k, v]) => `<div class="stat"><div class="n">${v}</div><div class="l">${k}</div></div>`).join('');
+  const tb = $('ex-table').querySelector('tbody');
+  tb.innerHTML = ex.exceptions.map((e) => {
+    const r = typeof e.result === 'string' ? JSON.parse(e.result) : e.result;
+    const actionable = e.status === 'proposed' && e.decision === 'proposal';
+    return `<tr><td class="mono">${e.id}</td><td style="max-width:260px">${e.label}</td><td class="mono">${eur(e.amount_cents)}</td>
+      <td><span class="pill ${e.decision}">${e.decision}</span></td><td class="mono">${e.classification}</td>
+      <td><span class="pill ${e.status}">${e.status}</span></td>
+      <td><details><summary>preuves / décider</summary>${resultCard(r)}
+        ${actionable ? `<p><button class="btn small primary" data-ok="${e.id}">Valider l'affectation</button> <button class="btn small" data-ko="${e.id}">Rejeter</button></p>` : ''}
+      </details></td></tr>`;
+  }).join('');
+  tb.querySelectorAll('button[data-ok]').forEach((b) => (b.onclick = () => decide(b.dataset.ok, 'accept')));
+  tb.querySelectorAll('button[data-ko]').forEach((b) => (b.onclick = () => decide(b.dataset.ko, 'reject')));
+}
+
+async function decide(id, decision) {
+  const note = prompt(decision === 'accept' ? 'Note de validation (optionnelle) :' : 'Motif du rejet :') ?? '';
+  await api(`/api/exceptions/${id}/decision`, { method: 'POST', body: { decision, note } });
+  toast(decision === 'accept' ? 'Affectation validée — écriture proposée générée et scellée au journal' : 'Exception rejetée — scellée au journal');
+  refreshPortfolio(); refreshJournal();
+}
+
+async function refreshJournal() {
+  if (!state.companyId) return;
+  const jr = await api(`/api/companies/${state.companyId}/journal`);
+  $('journal-out').innerHTML = jr.entries.length ? jr.entries.map((e) =>
+    `<div class="card" style="padding:10px"><b>Écriture #${e.id}</b> · ${e.classification} · ${e.note}<br>` +
+    e.lines.map((l) => `${l.account} — ${l.label} : D ${eur(l.debit)} / C ${eur(l.credit)}`).join('<br>') + '</div>'
+  ).join('') : '<p class="muted">Aucune écriture — validez des propositions ci-dessus.</p>';
+  const au = await api(`/api/companies/${state.companyId}/audit`);
+  $('audit-out').innerHTML = au.events.map((e) => `№${e.seq} <b>${e.kind}</b> · sceau <span class="mono">${e.hash.slice(0, 14)}…</span>`).join('<br>');
+}
+
+async function refreshSubscription() {
+  if (!state.companyId) return;
+  const s = await api(`/api/companies/${state.companyId}/subscription`);
+  const l = s.links?.[0];
+  $('sub-out').innerHTML = s.status === 'none'
+    ? '<p class="muted">Aucun abonnement — l’analyse reste accessible tant que l’accès n’est pas suspendu.</p>'
+    : `<b class="mono">${s.plan}</b> · statut <span class="pill ${s.status === 'active' ? 'validated' : s.status === 'suspended' ? 'rejected' : 'flag'}">${s.status}</span>
+       · période <span class="mono">${s.period_month}</span> · échéance <span class="mono">${s.due_date}</span>
+       ${l ? `<br>Lien du mois : ${l.mode === 'saspay' ? (l.url ? `<a href="${l.url}" target="_blank">payer maintenant ↗</a>` : `SasPay #${l.saspay_id}`) : '<b>mode manuel</b> — lien à créer depuis SasPay et à transmettre au client'} · ${l.amount_fcfa.toLocaleString('fr-FR')} FCFA · <span class="pill">${l.status}</span>` : ''}`;
+}
+
+// ── événements ───────────────────────────────────────────────────────────────
+$('btn-register').onclick = async () => {
+  try { await api('/api/auth/register', { method: 'POST', body: { name: $('reg-name').value, email: $('reg-email').value, password: $('reg-pass').value } }); toast('Compte créé — connectez-vous'); }
+  catch (e) { toast(e.message, true); }
+};
+$('btn-login').onclick = async () => {
+  try { await api('/api/auth/login', { method: 'POST', body: { email: $('log-email').value, password: $('log-pass').value } }); await refreshMe(); toast('Connecté'); }
+  catch (e) { toast(e.message, true); }
+};
+$('btn-logout').onclick = async () => { await api('/api/auth/logout', { method: 'POST' }); state.companyId = null; await refreshMe(); };
+$('btn-create-co').onclick = async () => {
+  try { const r = await api('/api/companies', { method: 'POST', body: { name: $('co-name').value } }); state.companyId = r.company.id; await refreshMe(); toast('Entreprise créée — espace isolé prêt'); }
+  catch (e) { toast(e.message, true); }
+};
+$('btn-seed').onclick = async () => { try { const r = await api(`/api/companies/${state.companyId}/seed-demo`, { method: 'POST' }); toast(`Démo chargée : ${r.counts.proposal} propositions / ${r.counts.flag} alertes / ${r.counts.abstain} abstentions`); refreshPortfolio(); } catch (e) { toast(e.message, true); } };
+$('btn-reanalyze').onclick = async () => { try { const r = await api(`/api/companies/${state.companyId}/reanalyze`, { method: 'POST' }); toast(`Ré-analysé : ${JSON.stringify(r)}`); refreshPortfolio(); } catch (e) { toast(e.message, true); } };
+$('btn-refresh-ex').onclick = () => refreshPortfolio();
+$('btn-import-inv').onclick = async () => { try { const r = await api(`/api/companies/${state.companyId}/import-invoices`, { method: 'POST', body: { invoices: JSON.parse($('inv-json').value) } }); toast(`Factures importées : ${r.kept}`); } catch (e) { toast(e.message, true); } };
+$('btn-import-pay').onclick = async () => { try { const r = await api(`/api/companies/${state.companyId}/import-payments`, { method: 'POST', body: { payments: JSON.parse($('pay-json').value) } }); toast(`Opérations importées : ${r.kept}`); refreshPortfolio(); } catch (e) { toast(e.message, true); } };
+$('btn-analyze').onclick = async () => {
+  try {
+    const r = await api(`/api/companies/${state.companyId}/analyze`, { method: 'POST', body: { label: $('an-label').value, amountEur: Number($('an-amount').value), currency: $('an-cur').value } });
+    $('an-out').innerHTML = resultCard(r.result);
+  } catch (e) { toast(e.message, true); }
+};
+$('btn-verify').onclick = async () => {
+  const r = await api(`/api/companies/${state.companyId}/audit/verify`, { method: 'POST' });
+  $('verify-out').innerHTML = r.ok ? `<b style="color:var(--ok)">✓ chaîne intègre — ${r.checked} sceaux recalculés</b>` : `<b style="color:var(--red)">✗ rompue à №${r.brokenAt}</b>`;
+};
+document.querySelectorAll('button[data-plan]').forEach((b) => (b.onclick = async () => {
+  try { const r = await api(`/api/companies/${state.companyId}/subscription`, { method: 'POST', body: { plan: b.dataset.plan } }); toast(`Abonnement ${r.subscription.plan} — lien du mois créé (mode ${r.link.mode})`); refreshSubscription(); }
+  catch (e) { toast(e.message, true); }
+}));
+$('btn-pl-auth').onclick = async () => {
+  try { location.href = `/api/integrations/pennylane/authorize?company_id=${state.companyId}`; }
+  catch (e) { toast(e.message, true); }
+};
+$('btn-pl-sync').onclick = async () => {
+  try { const r = await api('/api/integrations/pennylane/sync?company_id=' + state.companyId, { method: 'POST' }); toast(`Synchronisé : ${r.invoices.kept} factures, ${r.payments.kept} transactions`); refreshPortfolio(); }
+  catch (e) { toast(e.message, true); }
+};
+$('btn-pl-status').onclick = () => {};
+
+(async () => {
+  try { await refreshMe(); refreshPortfolio(); refreshJournal(); refreshSubscription();
+    const st = state.companyId ? await api(`/api/integrations/pennylane/status?company_id=${state.companyId}`).catch(() => null) : null;
+    if (st) $('pl-status').textContent = st.connected ? `connecté — statut ${st.status}` : 'non connecté';
+  } catch (e) { /* hors session : normal */ }
+})();
+</script>
+</body>
+</html>

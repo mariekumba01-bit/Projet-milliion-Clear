@@ -1,0 +1,17 @@
+{
+  "name": "clearmatch-app",
+  "version": "0.1.0",
+  "description": "Application ClearMatch — backend commercial du moteur de référence (multi-entreprises, PostgreSQL, Pennylane OAuth2, SasPay, abonnements). Phase 1-5 du plan produit.",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=22.12.0" },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test",
+    "e2e": "node scripts/e2e-journey.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.2.17",
+    "pg": "^8.13.1"
+  }
+}
