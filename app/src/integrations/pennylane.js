@@ -68,6 +68,45 @@ export function refreshToken(cfg, refreshTokenValue) {
   return tokenPost(cfg, { grant_type: 'refresh_token', refresh_token: refreshTokenValue });
 }
 
+/** Révocation côté Pennylane (endpoint officiel /oauth/revoke) — appelée à la déconnexion. */
+export async function revokeToken(cfg, refreshTokenValue) {
+  const revokeUrl = cfg.pennylane.revokeUrl || 'https://app.pennylane.com/oauth/revoke';
+  try {
+    const res = await fetch(revokeUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+      body: new URLSearchParams({ token: refreshTokenValue, client_id: cfg.pennylane.clientId, client_secret: cfg.pennylane.clientSecret }),
+    });
+    // RFC 7009 : 200 même sur token déjà invalide ; autre code = revocation non confirmée
+    return res.ok ? { revoked: true } : { revoked: false, reason: `HTTP ${res.status}` };
+  } catch (e) {
+    // une révocation qui échoue (réseau) ne bloque pas la déconnexion locale
+    return { revoked: false, reason: e.message };
+  }
+}
+
+/** Déconnexion : révocation distante (au mieux) + destruction des jetons locaux, scellée au journal. */
+export async function disconnectConnection(db, cfg, companyId) {
+  const rows = await db.query('SELECT * FROM pennylane_connections WHERE company_id = $1', [companyId]);
+  let revokeResult = { revoked: false, reason: 'aucune connexion' };
+  if (rows[0]) {
+    try {
+      const refresh = decryptSecret(rows[0].refresh_token_enc, cfg.appSecretKey);
+      revokeResult = await revokeToken(cfg, refresh);
+    } catch (e) {
+      revokeResult = { revoked: false, reason: e.message };
+    }
+    await db.query('DELETE FROM pennylane_connections WHERE company_id = $1', [companyId]);
+  }
+  await appendAudit(db, companyId, 'integration.disconnected', {
+    provider: 'pennylane', revokedRemotely: revokeResult.revoked === true,
+    note: 'jetons locaux détruits ; ' + (revokeResult.revoked === true
+      ? 'révocation confirmée côté Pennylane'
+      : `révocation distante non confirmée (${revokeResult.reason ?? 'réponse non standard'}) — à vérifier côté Pennylane`),
+  });
+  return { disconnected: true, revokedRemotely: revokeResult.revoked === true };
+}
+
 // ── Client API v2 ─────────────────────────────────────────────────────────────
 export class PennylaneClient {
   constructor(cfg, accessToken, { companyIdHeader = null, fetchImpl = fetch } = {}) {

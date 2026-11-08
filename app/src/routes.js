@@ -19,6 +19,22 @@ const int = (v) => {
   return n;
 };
 
+/** Export intégral d'une entreprise (RGPD portabilité + reçu de suppression). */
+async function exportCompany(db, companyId) {
+  const company = (await db.query('SELECT id, name, owner_user_id, created_at FROM companies WHERE id = $1', [companyId]))[0] ?? null;
+  const [memberships, invoices, payments, exceptions, journal, subscription, links, audit] = await Promise.all([
+    db.query('SELECT user_id, role FROM memberships WHERE company_id = $1', [companyId]),
+    db.query('SELECT * FROM invoices WHERE company_id = $1', [companyId]),
+    db.query('SELECT * FROM payments WHERE company_id = $1', [companyId]),
+    db.query('SELECT * FROM exceptions WHERE company_id = $1', [companyId]),
+    db.query('SELECT * FROM journal_entries WHERE company_id = $1', [companyId]),
+    db.query('SELECT * FROM subscriptions WHERE company_id = $1', [companyId]),
+    db.query('SELECT * FROM payment_links WHERE company_id = $1', [companyId]),
+    db.query('SELECT * FROM audit_events WHERE company_id = $1 ORDER BY seq', [companyId]),
+  ]);
+  return { company, memberships, invoices, payments, exceptions, journal_entries: journal, subscriptions: subscription, payment_links: links, audit_events: audit };
+}
+
 export async function route({ method, path, query, body, req, db, cfg, user }) {
   const parts = seg(path);
   const j = (status, json, headers = []) => ({ status, json, headers });
@@ -72,6 +88,22 @@ export async function route({ method, path, query, body, req, db, cfg, user }) {
     await destroySession(db, req);
     return j(200, { ok: true }, [['Set-Cookie', clearSessionCookie()]]);
   }
+  // RGPD — suppression du compte utilisateur : possible seulement sans entreprise détenue
+  // (les entreprises sont supprimées individuellement d'abord, avec reçu d'export).
+  if (path === '/api/auth/me' && method === 'DELETE') {
+    checkCsrf(req);
+    const owned = await db.query(
+      "SELECT 1 FROM memberships WHERE user_id = $1 AND role = 'owner' LIMIT 1",
+      [user.id],
+    );
+    if (owned.length) {
+      throw new HttpError(409, 'has_companies', 'supprimez d’abord vos entreprises (export + suppression disponibles par entreprise)');
+    }
+    await db.query('DELETE FROM memberships WHERE user_id = $1', [user.id]);
+    await db.query('DELETE FROM sessions WHERE user_id = $1', [user.id]);
+    await db.query('DELETE FROM users WHERE id = $1', [user.id]);
+    return j(200, { deleted: true }, [['Set-Cookie', clearSessionCookie()]]);
+  }
   if (path === '/api/me' && method === 'GET') {
     if (!user) return j(401, { error: { code: 'not_logged_in', message: 'session requise' } });
     const companies = await db.query(
@@ -109,6 +141,26 @@ export async function route({ method, path, query, body, req, db, cfg, user }) {
         if (!c) throw new HttpError(404, 'not_found', 'entreprise introuvable');
         return j(200, { company: c });
       }
+      // RGPD — suppression de l'entreprise : reçu d'export renvoyé AVANT destruction
+      // (cascades PostgreSQL : factures, opérations, exceptions, audit chaîné, abonnement).
+      if (method === 'DELETE') {
+        checkCsrf(req);
+        await requireMembership(db, companyId, user.id, ['owner']);
+        const dump = await exportCompany(db, companyId);
+        const lastHash = dump.audit_events.at(-1)?.hash ?? null;
+        await db.query('DELETE FROM companies WHERE id = $1', [companyId]);
+        return j(200, {
+          deleted: true, companyId, receipt: { exportedAt: nowIso(), lastAuditHash: lastHash, data: dump },
+          note: 'reçu de suppression : snapshot complet + dernier sceau d’audit, à archiver hors ClearMatch',
+        });
+      }
+    }
+
+    // RGPD — export intégral des données de l'entreprise (portabilité, article 20)
+    if (rest[0] === 'export' && method === 'POST') {
+      checkCsrf(req);
+      await requireMembership(db, companyId, user.id, ['owner']);
+      return j(200, { exportedAt: nowIso(), data: await exportCompany(db, companyId) });
     }
 
     // portefeuille & moteur
@@ -174,10 +226,21 @@ export async function route({ method, path, query, body, req, db, cfg, user }) {
     if (rest[0] === 'subscription' && method === 'GET') {
       return j(200, await billing.getSubscription(db, companyId));
     }
-    if (rest[0] === 'subscription' && method === 'POST') {
+    if (rest[0] === 'subscription' && rest.length === 1 && method === 'POST') {
       checkCsrf(req);
       await requireMembership(db, companyId, user.id, ['owner']);
       return j(200, await billing.subscribe(db, cfg, companyId, String(body.json?.plan ?? '')));
+    }
+    // rapprochement HUMAIN d'un lien « candidate » (mode manuel, sans vérification fournisseur)
+    if (rest[0] === 'subscription' && rest[1] === 'confirm-payment' && method === 'POST') {
+      checkCsrf(req);
+      await requireMembership(db, companyId, user.id, ['owner', 'accountant']);
+      const res = await billing.confirmManualPayment(db, cfg, companyId, user.id, {
+        linkId: int(String(body.json?.linkId ?? '')),
+        transactionRef: String(body.json?.transactionRef ?? ''),
+        note: String(body.json?.note ?? ''),
+      });
+      return j(200, res);
     }
 
     throw new HttpError(404, 'not_found', `route inconnue : ${method} ${path}`);
@@ -242,6 +305,12 @@ export async function route({ method, path, query, body, req, db, cfg, user }) {
       await billing.assertNotSuspended(db, cfg, companyId);
       const report = await pl.pennylaneSync(db, companyId, cfg);
       return j(200, report);
+    }
+    // déconnexion : révocation distante (au mieux) + destruction des jetons locaux
+    if (parts[3] === 'disconnect' && method === 'POST') {
+      checkCsrf(req);
+      await requireMembership(db, companyId, user.id, ['owner']);
+      return j(200, await pl.disconnectConnection(db, cfg, companyId));
     }
   }
 

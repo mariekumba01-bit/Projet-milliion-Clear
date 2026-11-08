@@ -1,6 +1,9 @@
 'use strict';
-// Parcours complet « comme un vrai utilisateur » — de l'inscription à la suspension,
-// en HTTP réel contre un serveur ClearMatch App réel (PostgreSQL embarqué pglite).
+// Parcours complet « comme un vrai utilisateur » — de l'inscription à la réactivation,
+// en HTTP réel contre un serveur ClearMatch App réel (PostgreSQL embarqué pglite) et un
+// fournisseur SasPay de test conforme à l'OpenAPI (liens + transactions vérifiables).
+// La réconciliation est faite par IDENTIFIANTS FOURNISSEUR : un webhook au bon montant
+// mais à la transaction inconnue du lien n'active RIEN (étape négative 9bis).
 // Exporté pour le test E2E ; exécutable seul : node scripts/e2e-journey.mjs
 process.env.NODE_ENV = 'test';
 process.env.APP_SECRET_KEY ||= 'a'.repeat(32);
@@ -10,24 +13,33 @@ process.env.BILLING_ENFORCE ||= '1';
 const step = (n, title, extra = '') => console.log(`  ${String(n).padStart(2, '0')}. ${title}${extra ? ` — ${extra}` : ''}`);
 
 export async function runJourney() {
-  const { initPglite, Db } = await import('../src/db.js');
-  const { createApp } = await import('../src/server.js');
-  const { config } = await import('../src/config.js');
-  await initPglite();
-  const db = new Db('pglite::memory:');
-  await db.migrate();
-  const server = createApp({ db, cfg: config });
-  await new Promise((r) => server.listen(0, '127.0.0.1', r));
-  const port = server.address().port;
+  const { startFakeSaspay } = await import('../test/helpers.js');
+  const fake = await startFakeSaspay();
+  process.env.SASPAY_API_KEY = 'sk_test_journey';
+  process.env.SASPAY_BASE_URL = `http://127.0.0.1:${fake.port}`;
+
   try {
-    return await journeySteps(port, db, config);
+    const { initPglite, Db } = await import('../src/db.js');
+    const { createApp } = await import('../src/server.js');
+    const { config, deriveFromEnv } = await import('../src/config.js');
+    await initPglite();
+    Object.assign(config, deriveFromEnv());
+    const db = new Db('pglite::memory:');
+    await db.migrate();
+    const server = createApp({ db, cfg: config });
+    await new Promise((r) => server.listen(0, '127.0.0.1', r));
+    try {
+      return await journeySteps(server.address().port, db, config, fake);
+    } finally {
+      await new Promise((r) => server.close(r));
+      await db.close();
+    }
   } finally {
-    await new Promise((r) => server.close(r));
-    await db.close();
+    await fake.close();
   }
 }
 
-async function journeySteps(port, db, config) {
+async function journeySteps(port, db, config, fake) {
   let cookie = '';
   const call = async (method, path, body) => {
     const res = await fetch(`http://127.0.0.1:${port}${path}`, {
@@ -100,20 +112,31 @@ async function journeySteps(port, db, config) {
   out.auditChecked = ver.json.checked;
   step(7, 'chaîne intègre', `${ver.json.checked} sceaux recalculés`);
 
-  // 8 : abonnement Pro
-  step(8, 'Souscription Pro (149 € ≈ 97 500 FCFA/mois, lien manuel sans clé SasPay)');
+  // 8 : abonnement Pro — lien créé VIA L'API SasPay (mode saspay, id fournisseur réel)
+  step(8, 'Souscription Pro : lien 97 500 FCFA créé via POST /payment-links/ (fournisseur de test)');
   const sub = await call('POST', '/api/companies/1/subscription', { plan: 'pro' });
   assertEq(sub.status, 200);
-  out.link = { mode: sub.json.link.mode, amountFcfa: sub.json.link.amount_fcfa, due: sub.json.subscription.due_date };
-  step(8, 'lien du mois créé', `${out.link.amountFcfa} FCFA · mode ${out.link.mode} · échéance ${out.link.due}`);
+  assertEq(sub.json.link.mode, 'saspay');
+  const saspayLinkId = sub.json.link.saspay_id;
+  out.link = { mode: sub.json.link.mode, amountFcfa: sub.json.link.amount_fcfa, due: sub.json.subscription.due_date, saspayLinkId };
+  step(8, 'lien du mois créé', `${out.link.amountFcfa} FCFA · lien SasPay ${saspayLinkId} · échéance ${out.link.due}`);
 
-  // 9 : paiement SasPay réel (webhook signé) → actif
-  step(9, 'Paiement du client via SasPay (webhook transaction.success signé HMAC)');
-  const pay = await signedWebhook({ event: 'transaction.success', data: { id: 'txn-e2e-1', amount: '97500.00', currency: 'XOF', reference: 'SP-E2E-1' } });
+  // 9bis (négatif) : webhook au BON montant mais transaction inconnue du lien → RIEN
+  step('9a', 'Webhook au bon montant MAIS transaction inconnue du lien → aucune activation');
+  const ghost = await signedWebhook({ event: 'transaction.success', data: { id: 'txn-ghost', amount: '97500.00', currency: 'XOF', status: 'success' } });
+  assertEq(ghost.matched, false);
+  const stillPending = (await call('GET', '/api/companies/1/subscription')).json.status;
+  assertEq(stillPending, 'pending_payment');
+  step('9a', 'activation refusée', 'la réconciliation exige l’identifiant fournisseur, pas le seul montant');
+
+  // 9 : paiement réel — le fournisseur enregistre la transaction DANS le lien → vérifié → actif
+  step(9, 'Paiement réel : le fournisseur enregistre la transaction dans le lien, webhook signé reçu');
+  fake.addTransaction(saspayLinkId, { id: 'txn-e2e-1', status: 'success', amount: '97500.00', currency: 'XOF' });
+  const pay = await signedWebhook({ event: 'transaction.success', data: { id: 'txn-e2e-1', amount: '97500.00', currency: 'XOF', status: 'success', reference: 'SP-E2E-1' } });
   assertEq(pay.matched, true);
   const active = (await call('GET', '/api/companies/1/subscription')).json;
   assertEq(active.status, 'active');
-  step(9, 'abonnement actif', 'lien marqué payé, période courant mois');
+  step(9, 'abonnement actif', `vérifié via GET /payment-links/${saspayLinkId}/transactions/`);
 
   // 10 : mois suivant sans paiement → J21 → suspension → moteur bloqué (402)
   step(10, 'Mois suivant sans paiement : tick J21 (rappel J7 déjà passé) → suspension');
@@ -126,9 +149,13 @@ async function journeySteps(port, db, config) {
   assertEq(blocked.status, 402);
   step(10, 'accès suspendu', `analyse → HTTP ${blocked.status} (${blocked.json.error.code})`);
 
-  // 11 : paiement tardif → réactivation
-  step(11, 'Régularisation : paiement tardif du lien du mois → réactivation');
-  const late = await signedWebhook({ event: 'transaction.success', data: { id: 'txn-e2e-2', amount: '97500.00', reference: 'SP-E2E-2' } });
+  // 11 : paiement tardif → vérification fournisseur → réactivation
+  step(11, 'Régularisation : nouvelle transaction dans le lien du mois → réactivation');
+  const afterSuspend = (await call('GET', '/api/companies/1/subscription')).json;
+  const openLink = afterSuspend.links.find((l) => l.status === 'created' || l.status === 'candidate');
+  assertEq(Boolean(openLink), true);
+  fake.addTransaction(openLink.saspay_id, { id: 'txn-e2e-2', status: 'success', amount: '97500.00', currency: 'XOF' });
+  const late = await signedWebhook({ event: 'transaction.success', data: { id: 'txn-e2e-2', amount: '97500.00', currency: 'XOF' } });
   assertEq(late.matched, true);
   const revived = (await call('GET', '/api/companies/1/subscription')).json.status;
   assertEq(revived, 'active');
@@ -136,13 +163,16 @@ async function journeySteps(port, db, config) {
   assertEq(ok.status, 200);
   step(11, 'accès rétabli', 'analyse → HTTP 200');
 
-  // 12 : audit final
-  step(12, 'Chaîne d’audit finale (aucune altération sur tout le parcours)');
+  // 12 : audit final + export RGPD
+  step(12, 'Chaîne d’audit finale + export intégral (RGPD portabilité)');
   const final = await call('POST', '/api/companies/1/audit/verify', {});
   assertEq(final.json.ok, true);
   out.auditOk = final.json.ok;
   out.auditFinal = final.json.checked;
-  step(12, 'chaîne intègre', `${final.json.checked} événements scellés`);
+  const ex = await call('POST', '/api/companies/1/export', {});
+  assertEq(ex.status, 200);
+  out.exportedRecords = ex.json.data.audit_events.length + ex.json.data.invoices.length + ex.json.data.payments.length;
+  step(12, 'chaîne intègre + export', `${final.json.checked} événements scellés · export ${out.exportedRecords} enregistrements`);
 
   return out;
 }
@@ -155,7 +185,7 @@ function assertEq(actual, expected) {
 
 const isMain = process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href;
 if (isMain) {
-  console.log('PARCOURS UTILISATEUR COMPLET — ClearMatch App (HTTP réel)');
+  console.log('PARCOURS UTILISATEUR COMPLET — ClearMatch App (HTTP réel + fournisseur SasPay de test)');
   runJourney()
     .then((out) => { console.log('\n✓ PARCOURS COMPLET RÉUSSI —', JSON.stringify(out, null, 1)); })
     .catch((e) => { console.error('\n✗ ÉCHEC :', e.message); process.exit(1); });

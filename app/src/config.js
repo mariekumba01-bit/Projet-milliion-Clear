@@ -43,6 +43,7 @@ export function deriveFromEnv() {
       redirectBase: req('PENNYLANE_REDIRECT_BASE') || 'http://localhost:8080',
       authUrl: req('PENNYLANE_AUTH_URL') || 'https://app.pennylane.com/oauth/authorize',
       tokenUrl: req('PENNYLANE_TOKEN_URL') || 'https://app.pennylane.com/oauth/token',
+      revokeUrl: req('PENNYLANE_REVOKE_URL') || 'https://app.pennylane.com/oauth/revoke',
       apiUrl: req('PENNYLANE_API_URL') || 'https://app.pennylane.com/api/external/v2',
       // Scopes vérifiés sur pennylane.readme.io/docs/v2-scopes (format « ressource:readonly »)
       scopes: 'customer_invoices:readonly transactions:readonly customers:readonly bank_accounts:readonly',

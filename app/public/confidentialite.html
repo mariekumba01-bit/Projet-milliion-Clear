@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ClearMatch — Politique de confidentialité (RGPD)</title>
+<style>body{font:15px/1.6 system-ui,sans-serif;max-width:760px;margin:0 auto;padding:32px 20px;color:#152419}h1{font-size:24px}h2{font-size:16px;margin-top:28px}.warn{background:#fdf3ef;border-left:4px solid #c2371f;padding:10px 14px;border-radius:6px}a{color:#c2371f}table{border-collapse:collapse;width:100%;font-size:13.5px}td,th{border:1px solid #d9d0ba;padding:6px 8px;text-align:left}</style></head>
+<body>
+<h1>Politique de confidentialité — ClearMatch AI</h1>
+<p class="warn">Version de travail. Elle décrit ce que le produit fait réellement aujourd’hui ; elle ne suffit pas, à elle seule, à rendre le service conforme : le registre des traitements, les contrats de sous-traitance (hébergeur, prestataires) et la documentation DPO restent à produire avant commercialisation.</p>
+<h2>1. Responsable de traitement</h2>
+<p>【À compléter : identité du responsable, représentant/DPO, contact privacy.】</p>
+<h2>2. Données traitées et finalités</h2>
+<table><tr><th>Données</th><th>Finalité</th><th>Base légale</th><th>Durée</th></tr>
+<tr><td>Compte : nom, e-mail, condensé de mot de passe (scrypt)</td><td>Authentification</td><td>Contrat</td><td>Vie du compte</td></tr>
+<tr><td>Portefeuille : factures, libellés bancaires, montants, devises</td><td>Rapprochement des exceptions</td><td>Contrat</td><td>Vie du tenant ; suppression à la demande</td></tr>
+<tr><td>Décisions humaines, écritures proposées, journal d’audit chaîné</td><td>Traçabilité et preuve</td><td>Contrat / intérêt légitime</td><td>Vie du tenant</td></tr>
+<tr><td>Jetons OAuth Pennylane (chiffrés AES-256-GCM)</td><td>Synchronisation sur consentement</td><td>Consentement (révocable)</td><td>Jusqu’à déconnexion</td></tr>
+<tr><td>Identifiants de paiement SasPay (références de transaction, montants)</td><td>Facturation de l’abonnement</td><td>Contrat</td><td>【À définir : obligations comptables — 10 ans usuels】</td></tr></table>
+<p>Aucune donnée financière n’est utilisée pour entraîner un modèle. Aucun tracker tiers dans l’application.</p>
+<h2>3. Vos droits</h2>
+<p>Export intégral (portabilité) et suppression (avec reçu) disponibles directement dans l’application, section « Données » ; exercice des autres droits : 【contact】. Les données d’une entreprise ne sont accessibles qu’à ses membres ; un utilisateur peut supprimer son compte une fois ses entreprises supprimées.</p>
+<h2>4. Sous-traitants et hébergement</h2>
+<p>Hébergement : 【À compléter : hébergeur, localisation UE】. Prestataires de paiement : SasPay (liens de paiement, mobile money/carte) — l’éligibilité au marché français et les conditions de règlement sont en cours de vérification ; une alternative UE (ex. Stripe, GoCardless) est étudiée avant vente. Pennylane : intégration au périmètre en lecture seule, révocable.</p>
+<h2>5. Sécurité</h2>
+<p>Chiffrement des jetons au repos (AES-256-GCM), mots de passe scrypt, sessions à jetons opaques (condensé seul en base), vérification des webhooks par HMAC à temps constant avant tout stockage, isolation stricte par tenant, journal d’audit chaîné par entreprise, taux limités sur les points sensibles. Les incidents seront notifiés conformément à l’article 33 du RGPD 【procédure interne à produire】.</p>
+<h2>6. Évolution</h2>
+<p>Cette politique sera complétée (registre, AIPD si requis, contrats) avant la première mise en production commerciale.</p>
+<p><a href="/">← Retour à l’application</a></p>
+</body></html>

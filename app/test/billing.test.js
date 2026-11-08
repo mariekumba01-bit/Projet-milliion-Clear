@@ -40,12 +40,22 @@ test('souscription sans clé SasPay → lien manuel 97 500 FCFA ; paiement → a
     const audit7 = await t.db.query("SELECT payload FROM audit_events WHERE kind = 'billing.reminder'");
     assert.equal(audit7.length, 1);
 
-    // paiement réel (webhook signé, montant du lien) → active
-    const pay = await postSignedWebhook(t.port, { event: 'transaction.success', data: { id: 'txn-ok', amount: '97500.00' } });
-    assert.equal(pay.json.matched, true);
-    const after = await c('GET', '/api/companies/1/subscription');
-    assert.equal(after.json.status, 'active');
-    assert.equal(after.json.links[0].status, 'paid');
+    // paiement réel annoncé par webhook (mode manuel, sans clé API) → « candidate »,
+    // JAMAIS d'activation automatique : le rapprochement humain décide
+    const pay = await postSignedWebhook(t.port, { event: 'transaction.success', data: { id: 'txn-ok', amount: '97500.00', currency: 'XOF' } });
+    assert.equal(pay.json.matched, false, 'sans vérification fournisseur possible : pas d’activation automatique');
+    assert.equal(pay.json.manual, true);
+    const pending = (await c('GET', '/api/companies/1/subscription')).json;
+    assert.equal(pending.status, 'pending_payment');
+    assert.equal(pending.links[0].status, 'candidate');
+
+    // rapprochement humain : le propriétaire confirme avec la référence de transaction
+    const confirm = await c('POST', '/api/companies/1/subscription/confirm-payment',
+      { linkId: pending.links[0].id, transactionRef: 'SP-BILL-1', note: 'vérifié côté SasPay' });
+    assert.equal(confirm.status, 200);
+    const after = (await c('GET', '/api/companies/1/subscription')).json;
+    assert.equal(after.status, 'active');
+    assert.equal(after.links[0].status, 'paid');
 
     // J21 du mois suivant sans paiement → suspension
     const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 21, 12));
@@ -55,9 +65,15 @@ test('souscription sans clé SasPay → lien manuel 97 500 FCFA ; paiement → a
     assert.equal(blocked.status, 402);
     assert.equal(blocked.json.error.code, 'subscription_suspended');
 
-    // paiement tardif du lien suspendu → réactivation (le webhook marque le lien payé → active)
-    const pay2 = await postSignedWebhook(t.port, { event: 'transaction.success', data: { id: 'txn-late', amount: '97500.00' } });
-    assert.equal(pay2.json.matched, true);
+    // paiement tardif du lien suspendu → « candidate » puis rapprochement humain → réactivation
+    const pay2 = await postSignedWebhook(t.port, { event: 'transaction.success', data: { id: 'txn-late', amount: '97500.00', currency: 'XOF' } });
+    assert.equal(pay2.json.manual, true);
+    const suspendedSub = (await c('GET', '/api/companies/1/subscription')).json;
+    const candLink = suspendedSub.links.find((l) => l.status === 'candidate');
+    assert.ok(candLink, 'un lien en rapprochement existe');
+    const confirm2 = await c('POST', '/api/companies/1/subscription/confirm-payment',
+      { linkId: candLink.id, transactionRef: 'SP-BILL-2', note: 'régularisation vérifiée' });
+    assert.equal(confirm2.status, 200);
     const unblocked = await c('POST', '/api/companies/1/analyze', { label: 'VIR RECU GAUTHIER ET FILS', amountEur: 3600 });
     assert.equal(unblocked.status, 200);
     const reactivated = await c('GET', '/api/companies/1/subscription');

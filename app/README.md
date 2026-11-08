@@ -6,10 +6,13 @@ abonnements « lien par mois », journal d'audit chaîné, décisions humaines o
 
 **Ce qui est réel maintenant** : tout le parcours produit — comptes, espaces isolés par
 entreprise, import de portefeuille, analyse du moteur, validation humaine avec écritures
-proposées, audit vérifiable cryptographiquement, abonnements avec cycle J1/J7/J21, webhooks
-SasPay vérifiés à temps constant et idempotents, OAuth2 Pennylane complet (code + refresh à
-rotation stricte, jetons chiffrés AES-256-GCM). Couvert par la suite de tests (moteur,
-sécurité, facturation, tenancy, OAuth, E2E complet).
+proposées, audit vérifiable cryptographiquement, abonnements avec cycle J1/J7/J21,
+réconciliation des paiements **par identifiants fournisseur** (jamais sur le seul montant :
+webhook cohérent en mode manuel → lien « candidate » → rapprochement humain scellé au
+journal), OAuth2 Pennylane complet (code + refresh à rotation stricte + révocation à la
+déconnexion, jetons chiffrés AES-256-GCM), export RGPD et suppression avec reçu.
+**41 tests verts** (moteur, adversarial, auth/CSRF, webhooks et anti-empoisonnement,
+facturation, tenancy/attaques, persistance/redémarrage réel, OAuth, RGPD, E2E complet).
 
 **Ce qui reste à activer avec des credentials réels** (le code est prêt, les appels partent
 au jour J) :
@@ -67,13 +70,39 @@ src/
   audit.js             journal chaîné sha256(seq|prev|kind|payload|ts), genesis partagé
   engine/core.js       port fidèle du moteur v0.2 (sans DOM ni données démo)
   engine/service.js    moteur sur données réelles, décisions humaines finales, écritures
-  billing.js           J1 lien / J7 rappel / J21 suspension, webhooks idempotents
+  billing.js           J1 lien / J7 rappel / J21 suspension ; réconciliation par identifiants
   integrations/saspay.js     port de connector-saspay.ts + client réseau réel
-  integrations/pennylane.js  OAuth2 v2 réel, mappers champs vérifiés, sync paginée
-  routes.js            toutes les routes /api
-  server.js            node:http brut, erreurs enveloppées, logs JSON
-  public/index.html    UI single-file (inscription → tableau de bord → abonnement)
+  integrations/pennylane.js  OAuth2 v2 réel, mappers champs vérifiés, sync paginée, révocation
+  routes.js            toutes les routes /api (dont export/suppression RGPD)
+  server.js            node:http brut, erreurs enveloppées, logs JSON, pages légales
+  public/index.html    UI single-file (échappement XSS systématique, états vides/chargement, mobile)
 ```
+
+## Sécurité (mesures implémentées)
+
+- **Mots de passe** scrypt (N=16384), **sessions** à jeton opaque (sha256 seul en base),
+  cookie HttpOnly/SameSite=Strict (+Secure en production).
+- **CSRF** par contrôle d'origine + en-tête dédié ; **rate-limit** sur inscription/connexion.
+- **Webhooks SasPay** : vérification HMAC à temps constant + fenêtre d'âge 300 s **avant tout
+  stockage** (un webhook invalide ne peut pas réserver un id d'événement — test de régression),
+  idempotence par PK, antifraude : une référence de transaction ne paie qu'un seul lien
+  (index unique partiel).
+- **Isolation tenants** : chaque requête est scopée par entreprise ; un non-membre reçoit 404
+  (pas de sonde d'existence) ; testé par une batterie d'attaques (lecture, export, suppression,
+  rapprochement, injection SQL, payloads hostiles traités comme du texte).
+- **UI** : échappement HTML systématique (libellés bancaires rendus comme du texte).
+- **Secrets** : jetons OAuth chiffrés AES-256-GCM au repos ; rien de secret dans le frontend ;
+  ADMIN_TOKEN et APP_SECRET_KEY obligatoires en production (fail-fast).
+- **RGPD** : export intégral (portabilité), suppression d'entreprise avec reçu (snapshot +
+  dernier sceau d'audit), suppression du compte, révocation Pennylane à la déconnexion.
+
+## Résultats du moteur : portée exacte
+
+Les verdicts (114/114 au banc, 9 propositions/7 alertes/5 abstentions sur le lot démo,
+0 faux positif d'affectation arithmétique) mesurent la conformité du moteur à **son jeu de
+test synthétique** — ils ne constituent PAS une précision observée sur des transactions
+réelles ni une garantie. La calibration des scores de confiance et la mesure FP/FN sur
+données autorisées sont des livrables du pilote (phase 6).
 
 ## Contrat produit (inchangé)
 

@@ -14,8 +14,6 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(HERE, '..', 'public');
 
 export function createApp({ db, cfg }) {
-  let uiCache = null;
-
   async function readJsonBody(req, limit = 2 * 1024 * 1024) {
     const chunks = [];
     let size = 0;
@@ -37,11 +35,12 @@ export function createApp({ db, cfg }) {
     const path = url.pathname;
 
     try {
-      // UI statique (single-file) — cache désactivé : le produit évolue vite.
-      if (req.method === 'GET' && (path === '/' || path === '/index.html')) {
-        uiCache ??= await readFile(join(PUBLIC_DIR, 'index.html'), 'utf8');
+      // Pages statiques en liste blanche (UI + pages légales) — cache désactivé.
+      if (req.method === 'GET' && ['/', '/index.html', '/cgu.html', '/confidentialite.html', '/mentions-legales.html'].includes(path)) {
+        const file = path === '/' ? 'index.html' : path.slice(1);
+        const html = await readFile(join(PUBLIC_DIR, file), 'utf8');
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-        res.end(uiCache);
+        res.end(html);
         return;
       }
 

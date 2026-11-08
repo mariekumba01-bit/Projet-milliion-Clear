@@ -125,12 +125,17 @@ CREATE TABLE IF NOT EXISTS payment_links (
   mode text NOT NULL DEFAULT 'manual' CHECK (mode IN ('saspay', 'manual')),
   saspay_id text,
   url text,
-  status text NOT NULL DEFAULT 'created' CHECK (status IN ('created', 'paid', 'canceled')),
+  status text NOT NULL DEFAULT 'created'
+    CHECK (status IN ('created', 'candidate', 'paid', 'canceled')),
+  paid_transaction_ref text,              -- identifiant de transaction consommé (antifraude)
   reminder_sent_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   paid_at timestamptz,
   UNIQUE (subscription_id, period_month)
 );
+-- Un identifiant de transaction ne peut payer qu'un seul lien, jamais deux.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_paid_transaction_ref
+  ON payment_links (paid_transaction_ref) WHERE paid_transaction_ref IS NOT NULL;
 
 -- Webhooks SasPay : idempotence par id d'événement (PK) — jamais traité deux fois
 CREATE TABLE IF NOT EXISTS saspay_events (

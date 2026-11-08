@@ -6,8 +6,17 @@ process.env.APP_SECRET_KEY ||= 'a'.repeat(32);
 process.env.SASPAY_WEBHOOK_SECRET ||= 'whsec_test_2026';
 process.env.BILLING_ENFORCE ||= '1';
 
+const ENV_DEFAULTS = {
+  // réinitialise les intégrations et l'admin à chaque boot : aucun env ne fuite d'un test à l'autre
+  ADMIN_TOKEN: '',
+  SASPAY_API_KEY: '', SASPAY_BASE_URL: '',
+  PENNYLANE_CLIENT_ID: '', PENNYLANE_CLIENT_SECRET: '',
+  PENNYLANE_AUTH_URL: '', PENNYLANE_TOKEN_URL: '', PENNYLANE_API_URL: '',
+  PENNYLANE_REDIRECT_BASE: '', PENNYLANE_REVOKE_URL: '',
+};
+
 export async function boot(overrides = {}) {
-  for (const [k, v] of Object.entries(overrides)) process.env[k] = v;
+  for (const [k, v] of Object.entries({ ...ENV_DEFAULTS, ...overrides })) process.env[k] = v;
   const { initPglite, Db } = await import('../src/db.js');
   const { createApp } = await import('../src/server.js');
   const { config, deriveFromEnv } = await import('../src/config.js');
@@ -72,6 +81,39 @@ export async function postSignedWebhook(port, payloadObj, { secret = 'whsec_test
   return { status: res.status, json };
 }
 
+/** Fournisseur SasPay de test : implémente POST /payment-links/ et
+ *  GET /payment-links/{id}/transactions/ (contrat OpenAPI v1.0.0) pour tester la
+ *  réconciliation par identifiants fournisseur. */
+export async function startFakeSaspay() {
+  const http = await import('node:http');
+  const state = { nextLinkId: 100, linkTransactions: new Map(), linkRequests: [] };
+  const server = http.createServer(async (req, res) => {
+    const url = new URL(req.url, 'http://x');
+    const send = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
+    if (url.pathname === '/payment-links/' && req.method === 'POST') {
+      let body = '';
+      for await (const c of req) body += c;
+      state.linkRequests.push(JSON.parse(body || '{}'));
+      const id = `pl_${state.nextLinkId++}`;
+      state.linkTransactions.set(id, []);
+      return send(200, { id, url: `https://pay.saspay.test/${id}` });
+    }
+    const m = url.pathname.match(/^\/payment-links\/([^/]+)\/transactions\/?$/);
+    if (m && req.method === 'GET') {
+      if (!state.linkTransactions.has(m[1])) return send(404, { error: 'link_not_found' });
+      return send(200, { results: state.linkTransactions.get(m[1]) });
+    }
+    send(404, { error: 'not_found' });
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const port = server.address().port;
+  return {
+    port, state,
+    addTransaction(linkId, txn) { state.linkTransactions.get(linkId).push(txn); },
+    close: () => new Promise((r) => server.close(r)),
+  };
+}
+
 /** Fournisseur Pennylane de test : serveur HTTP local implémentant OAuth + API v2. */
 export async function startFakePennylane() {
   const http = await import('node:http');
@@ -105,6 +147,14 @@ export async function startFakePennylane() {
         return send(200, { ...TOKEN, access_token: `at_fake_${state.refreshCount + 1}`, refresh_token: `rt_fake_${state.refreshCount + 1}` });
       }
       return send(400, { error: 'unsupported_grant_type' });
+    }
+    if (url.pathname === '/oauth/revoke') {
+      let form = '';
+      for await (const c of req) form += c;
+      const params = Object.fromEntries(new URLSearchParams(form));
+      state.revoked = state.revoked ?? [];
+      state.revoked.push(params.token);
+      return send(200, {});
     }
     if (url.pathname === '/api/external/v2/customer_invoices') {
       // at_fake_1 (émis par l'échange initial) est révoqué côté fournisseur : 401 UNE fois,

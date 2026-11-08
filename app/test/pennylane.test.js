@@ -107,6 +107,45 @@ test('rotation stricte du refresh : token expiré → 401 → refresh (rt_1) →
   } finally { await t.close(); await fake.close(); }
 });
 
+test('déconnexion Pennylane : révocation distante confirmée + jetons locaux détruits + audit', async () => {
+  const fake = await startFakePennylane();
+  const t = await boot({
+    PENNYLANE_CLIENT_ID: 'cid', PENNYLANE_CLIENT_SECRET: 'csecret',
+    PENNYLANE_AUTH_URL: `http://127.0.0.1:${fake.port}/oauth/authorize`,
+    PENNYLANE_TOKEN_URL: `http://127.0.0.1:${fake.port}/oauth/token`,
+    PENNYLANE_REVOKE_URL: `http://127.0.0.1:${fake.port}/oauth/revoke`,
+    PENNYLANE_API_URL: `http://127.0.0.1:${fake.port}/api/external/v2`,
+    PENNYLANE_REDIRECT_BASE: 'http://127.0.0.1:31236',
+    PORT_TEST: 31236,
+  });
+  try {
+    const c = client(t.port);
+    await c('POST', '/api/auth/register', { email: 'disc@test.fr', password: 'motdepasse10', name: 'D' });
+    await c('POST', '/api/companies', { name: 'Déconnexion' });
+    const cookieHeader = c.cookieHeader();
+    const auth = await fetch(`http://127.0.0.1:${t.port}/api/integrations/pennylane/authorize?company_id=1`, { headers: { cookie: cookieHeader }, redirect: 'manual' });
+    const cb = await fetch(auth.headers.get('location'), { redirect: 'manual' });
+    await fetch(cb.headers.get('location'), { headers: { cookie: cookieHeader }, redirect: 'manual' });
+    assert.equal((await t.db.query('SELECT COUNT(*)::int AS n FROM pennylane_connections WHERE company_id = 1'))[0].n, 1);
+
+    // un non-membre ne peut pas déconnecter l'entreprise d'autrui
+    const v = client(t.port);
+    await v('POST', '/api/auth/register', { email: 'disc2@test.fr', password: 'motdepasse10', name: 'V' });
+    assert.equal((await v('POST', '/api/integrations/pennylane/disconnect?company_id=1', {})).status, 403);
+
+    const out = await c('POST', '/api/integrations/pennylane/disconnect?company_id=1', {});
+    assert.equal(out.status, 200);
+    assert.equal(out.json.disconnected, true);
+    assert.equal(out.json.revokedRemotely, true, 'révocation confirmée par le fournisseur (endpoint /oauth/revoke)');
+    assert.ok(fake.state.revoked?.length >= 1, 'le refresh token a bien été transmis au endpoint de révocation');
+    assert.equal((await t.db.query('SELECT COUNT(*)::int AS n FROM pennylane_connections WHERE company_id = 1'))[0].n, 0, 'jetons locaux détruits');
+    const audit = await t.db.query("SELECT kind FROM audit_events WHERE kind = 'integration.disconnected'");
+    assert.equal(audit.length, 1);
+    const status = (await c('GET', '/api/integrations/pennylane/status?company_id=1')).json;
+    assert.equal(status.connected, false);
+  } finally { await t.close(); await fake.close(); }
+});
+
 test('sans identifiants partenaires : sync → 503 pennylane_not_configured, aucun appel réseau', async () => {
   const t = await boot();
   // config vivante réalignée (cache de module) : on retire les identifiants partenaires
